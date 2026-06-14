@@ -2,3 +2,9 @@
 # esbuild needs its postinstall to fetch the platform binary so vite can run.
 allowBuilds:
   esbuild: true
+
+# Supply-chain cooldown: don't resolve dependency versions younger than 7 days
+# (10080 minutes). Affects pnpm add/update and non-frozen installs; CI's
+# --frozen-lockfile is unaffected. Use minimumReleaseAgeExclude for an urgent
+# security patch that can't wait out the window.
+minimumReleaseAge: 10080
