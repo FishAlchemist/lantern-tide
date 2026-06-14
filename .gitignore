@@ -1,0 +1,46 @@
+# Based on GitHub's Node.gitignore (github/gitignore), trimmed to the toolchain
+# this project actually uses: Vite + pnpm + TypeScript + ESLint + Stylelint +
+# Vitest + Playwright.
+
+# Logs
+logs
+*.log
+*.local
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+.output/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Tooling caches
+.eslintcache
+.stylelintcache
+.cache/
+
+# Test coverage (Vitest)
+coverage/
+*.lcov
+
+# Vite
+.vite/
+vite.config.*.timestamp-*
+
+# dotenv environment files (keep the committed example)
+.env
+.env.*
+!.env.example
+
+# Editor / OS cruft
+.DS_Store
+.demo/
+
+# Playwright e2e artifacts (verification only, regenerable)
+test-results/
+playwright-report/
+tests/e2e/__shots__/

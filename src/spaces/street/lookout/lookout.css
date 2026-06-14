@@ -1,0 +1,505 @@
+/* ════════════════════════════════════════════════════════════════
+   Lookout interior (§1 / §7)  ── a pure-CSS night scene ──
+   High ground by a village under the stars: a lit-window village in the
+   distance, the lookout terrace near, a few folk on the deck; now and then a
+   meteor streaks past. The warm points are the lamp and the village windows
+   (the lights a wanderer follows). The world drifts slowly (parallax); the
+   fire and stars each breathe / flicker gently.
+   Relies on the .space base from spaces.css/style.css (loaded via the street).
+   ════════════════════════════════════════════════════════════════ */
+
+.lookout__scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--abyss);
+}
+
+/* Parallax layers (full-bleed, stacked): offset = JS-set --par-x/--par-y ×
+   each layer's --depth. */
+.lookout__layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  transform: translate3d(
+    calc(var(--par-x, 0) * var(--depth, 0) * 1px),
+    calc(var(--par-y, 0) * var(--depth, 0) * 1px),
+    0
+  );
+}
+
+/* Night sky: blue-black, a little warmth near the horizon. */
+.lookout__sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--abyss) 0%,
+    color-mix(in srgb, var(--deep) 48%, var(--abyss)) 50%,
+    color-mix(in srgb, var(--deep) 62%, var(--abyss)) 78%,
+    color-mix(in srgb, var(--lantern) 12%, var(--deep)) 100%
+  );
+}
+
+/* The warm afterglow behind the village. */
+.lookout__horizon {
+  position: absolute;
+  right: 0;
+  bottom: 10%;
+  left: 0;
+  z-index: 1;
+  height: 34%;
+  background: radial-gradient(
+    62% 100% at 50% 100%,
+    color-mix(in srgb, var(--lantern) 24%, transparent) 0%,
+    color-mix(in srgb, var(--lantern) 8%, transparent) 40%,
+    transparent 72%
+  );
+  /* The warmth rises with the story (--warm-on): cold dark island → the whole
+     scene warms by the end. */
+  opacity: var(--warm-on, 1);
+  transition: opacity 1.3s var(--ease-tide);
+}
+
+/* Cool silver moon, upper-right (contrasting the warm village). */
+.lookout__moon {
+  position: absolute;
+  z-index: 2;
+  top: 12%;
+  left: 71%;
+  width: 4.4rem;
+  height: 4.4rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 42% 40%,
+    color-mix(in srgb, var(--mist) 90%, var(--glow)) 0%,
+    color-mix(in srgb, var(--mist) 48%, transparent) 58%,
+    transparent 72%
+  );
+  box-shadow: 0 0 4rem color-mix(in srgb, var(--mist) 22%, transparent);
+}
+
+/* Starfield. */
+.lookout__stars {
+  z-index: 3;
+}
+.lookout__star {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--mist);
+  box-shadow: 0 0 2px color-mix(in srgb, var(--mist) 55%, transparent);
+  animation: lookout-twinkle var(--tw, 3s) ease-in-out infinite;
+}
+/* The north-pointing star (the girl, in the legend): brighter, with a cross
+   glow. Whether it's lit follows the story (--star-on: it lights at beat 6,
+   "the flame becomes the north star"); the flicker only animates scale. */
+.lookout__star--north {
+  width: 3.4px;
+  height: 3.4px;
+  background: color-mix(in srgb, var(--mist) 92%, var(--glow));
+  box-shadow:
+    0 0 4px color-mix(in srgb, var(--mist) 85%, var(--glow)),
+    0 0 12px color-mix(in srgb, var(--mist) 50%, transparent);
+  transform-origin: center;
+  opacity: var(--star-on, 1);
+  transition: opacity 1.3s var(--ease-tide);
+  animation: lookout-northstar 4.5s ease-in-out infinite;
+}
+
+/* Meteors: JS spawns one now and then; fixed direction down-right (--dx/--dy),
+   removed when the streak ends. */
+.lookout__meteors {
+  z-index: 3;
+  pointer-events: none;
+  --dx: 60vmax;
+  --dy: 23vmax;
+}
+.lookout__meteor {
+  position: absolute;
+  width: var(--len, 140px);
+  height: 2.5px;
+  border-radius: 2px;
+  transform-origin: left center;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--mist) 32%, transparent) 32%,
+    color-mix(in srgb, var(--mist) 96%, var(--glow)) 100%
+  );
+  box-shadow: 0 0 6px color-mix(in srgb, var(--mist) 55%, transparent);
+  animation: lookout-meteor var(--dur, 1.2s) ease-out forwards;
+}
+
+/* ── The lit-window village (midground, on the far edge of the foreground). ── */
+.lookout__village {
+  z-index: 4;
+}
+.lookout__house {
+  position: absolute;
+  bottom: 18%;
+  width: var(--w, 2rem);
+  height: var(--h, 1.4rem);
+  border-radius: 1px 1px 0 0;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--abyss) 80%, var(--ink)) 0%,
+    color-mix(in srgb, var(--deep) 42%, var(--abyss)) 100%
+  );
+}
+/* Roof (triangle). */
+.lookout__house::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-right: calc(var(--w) / 2 + 0.18rem) solid transparent;
+  border-bottom: var(--roof, 0.7rem) solid
+    color-mix(in srgb, var(--abyss) 86%, var(--ink));
+  border-left: calc(var(--w) / 2 + 0.18rem) solid transparent;
+}
+/* The lit window (one of the warm points, faintly flickering). */
+.lookout__house::after {
+  content: "";
+  position: absolute;
+  bottom: 26%;
+  left: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  transform: translateX(-50%);
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--lantern) 86%, var(--glow));
+  box-shadow: 0 0 0.55rem color-mix(in srgb, var(--lantern) 72%, transparent);
+  animation: lookout-window var(--wd, 3s) ease-in-out infinite;
+}
+
+/* ── Foreground: high ground, the lookout itself, the folk watching the stars. ── */
+.lookout__foreground {
+  z-index: 5;
+}
+.lookout__ground {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 18%;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--abyss) 96%, var(--ink)) 0%,
+    color-mix(in srgb, var(--abyss) 76%, transparent) 62%,
+    transparent 100%
+  );
+}
+
+/* ── The lookout itself: three stone tiers + railing + the ever-burning lamp
+   (dead centre). ── */
+.lookout__terrace {
+  position: absolute;
+  bottom: 9%;
+  left: 50%;
+  width: min(58%, 21rem);
+  height: 18%;
+  transform: translateX(-50%);
+}
+/* Three stone tiers (wide to narrow, trapezoid silhouettes; a glow along the
+   top edge separates the layers). */
+.lookout__tier {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--abyss) 90%, var(--ink)) 0%,
+    color-mix(in srgb, var(--deep) 36%, var(--abyss)) 100%
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--mist) 18%, transparent);
+}
+.lookout__tier--1 {
+  bottom: 0;
+  width: 100%;
+  height: 36%;
+  clip-path: polygon(3% 100%, 97% 100%, 88% 0, 12% 0);
+}
+.lookout__tier--2 {
+  bottom: 32%;
+  width: 74%;
+  height: 30%;
+  clip-path: polygon(5% 100%, 95% 100%, 86% 0, 14% 0);
+}
+.lookout__tier--3 {
+  bottom: 58%;
+  width: 50%;
+  height: 26%;
+  clip-path: polygon(7% 100%, 93% 100%, 90% 0, 10% 0);
+}
+/* The low railing on the deck (a row of posts + a top rail). */
+.lookout__railing {
+  position: absolute;
+  bottom: 80%;
+  left: 50%;
+  width: 46%;
+  height: 0.6rem;
+  transform: translateX(-50%);
+  border-top: 1.5px solid color-mix(in srgb, var(--mist) 40%, transparent);
+  background-image: repeating-linear-gradient(
+    to right,
+    color-mix(in srgb, var(--mist) 34%, transparent) 0 1.5px,
+    transparent 1.5px 8%
+  );
+}
+/* The ever-burning lamp on the deck (the site's warm heart; breathes) + its pole. */
+.lookout__lamp {
+  position: absolute;
+  bottom: 82%;
+  left: 50%;
+  width: 0;
+}
+.lookout__lamp-pole {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  height: 3.6rem;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--abyss) 82%, var(--ink)) 0%,
+    color-mix(in srgb, var(--deep) 38%, var(--abyss)) 100%
+  );
+}
+.lookout__lamp-light {
+  position: absolute;
+  bottom: 3.4rem;
+  left: 50%;
+  width: 1.05rem;
+  height: 1.35rem;
+  transform: translateX(-50%);
+  border-radius: 32% 32% 26% 26% / 26% 26% 32% 32%;
+  background: radial-gradient(
+    circle at 50% 42%,
+    color-mix(in srgb, var(--glow) 95%, white) 0%,
+    var(--lantern) 46%,
+    color-mix(in srgb, var(--lantern) 58%, transparent) 82%
+  );
+  box-shadow:
+    0 0 1.8rem color-mix(in srgb, var(--lantern) 60%, transparent),
+    0 0 4.5rem color-mix(in srgb, var(--lantern) 30%, transparent);
+  /* Brightness follows the story (--lamp-on); the breath only animates scale,
+     leaving opacity for the state. */
+  opacity: var(--lamp-on, 1);
+  transition: opacity 1.3s var(--ease-tide);
+  animation: lookout-lamp 5.5s var(--ease-tide) infinite;
+}
+
+/* The folk on the deck watching the stars (silhouettes, touched by lamplight;
+   swaying gently). */
+.lookout__folk {
+  position: absolute;
+  bottom: 21%;
+  width: 0.92rem;
+  height: 1.3rem;
+  transform: scale(var(--s, 1));
+  transform-origin: bottom center;
+  border-radius: 45% 45% 35% 35% / 55% 55% 30% 30%;
+  background: color-mix(in srgb, var(--abyss) 66%, var(--ink));
+  box-shadow: 0 0 0.6rem color-mix(in srgb, var(--lantern) 36%, transparent);
+  animation: lookout-folk-bob 3.4s ease-in-out infinite;
+}
+.lookout__folk::before {
+  content: "";
+  position: absolute;
+  top: -0.46rem;
+  left: 50%;
+  width: 0.62rem;
+  height: 0.62rem;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: inherit;
+}
+
+/* ── Content (the legend, told slowly by the fire) ── */
+.lookout__content {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 30rem;
+  padding: var(--space-10);
+  text-align: center;
+  cursor: pointer;
+  transform: translateY(-7%);
+}
+.lookout__label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--lantern) 50%, var(--moss));
+}
+.lookout__title {
+  font-weight: 300;
+  font-size: clamp(1.4rem, 3.6vw, 1.9rem);
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--glow) 60%, var(--mist));
+}
+.lookout__story {
+  min-height: 3.4em;
+  max-width: 24rem;
+  margin-top: var(--space-2);
+  font-family: var(--font-body);
+  font-size: clamp(1.1rem, 3.6vw, 1.45rem);
+  font-style: italic;
+  line-height: 1.7;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--glow) 32%, var(--mist));
+  text-shadow: 0 0 1.4rem color-mix(in srgb, var(--lantern) 22%, transparent);
+  transition:
+    opacity var(--dur-base) var(--ease-tide),
+    transform var(--dur-base) var(--ease-tide);
+}
+.lookout__story--out {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.lookout__hint {
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  /* Raised from 70% so this small hint clears 4.5:1 on the dark scene (a11y). */
+  color: color-mix(in srgb, var(--moss) 92%, transparent);
+}
+
+/* ── Navigation ── */
+.lookout__nav {
+  position: absolute;
+  bottom: var(--space-6);
+  left: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-10);
+  width: 100%;
+}
+.lookout__navlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target */
+  padding-inline: var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--moss);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.lookout__navlink:hover {
+  color: var(--mist);
+}
+
+/* English: tighten the uppercase label's tracking. */
+:lang(en) .lookout__label {
+  letter-spacing: 0.14em;
+}
+
+@keyframes lookout-twinkle {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes lookout-window {
+  0%,
+  100% {
+    opacity: 0.78;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes lookout-meteor {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(21deg);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), var(--dy), 0) rotate(21deg);
+  }
+}
+
+@keyframes lookout-lamp {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(0.97);
+  }
+
+  50% {
+    transform: translateX(-50%) scale(1.05);
+  }
+}
+
+@keyframes lookout-northstar {
+  0%,
+  100% {
+    transform: scale(0.85);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes lookout-folk-bob {
+  0%,
+  100% {
+    transform: scale(var(--s, 1)) translateY(0);
+  }
+
+  50% {
+    transform: scale(var(--s, 1)) translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lookout__star,
+  .lookout__star--north,
+  .lookout__house::after,
+  .lookout__lamp-light,
+  .lookout__folk {
+    animation: none;
+  }
+
+  /* The scene still changes with the story, but snaps instantly (§12). */
+  .lookout__lamp-light,
+  .lookout__star--north,
+  .lookout__horizon {
+    transition: none;
+  }
+}

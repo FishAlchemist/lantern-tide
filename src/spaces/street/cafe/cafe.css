@@ -1,0 +1,365 @@
+/* ════════════════════════════════════════════════════════════════
+   Café interior (option 2+4: night-café negative space × illustrated scene)
+   ────────────────────────────────────────────────────────────────
+   A late-night café interior: the tidal sea outside the window, one warm lamp
+   pooling light on the table, lots of empty space, content floating one short
+   line at a time. Parallax drifts the interior with the gaze, but the lamp and
+   the pool of light stay put (§7).
+   ════════════════════════════════════════════════════════════════ */
+
+.cafe__scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: radial-gradient(
+    140% 90% at 50% 38%,
+    var(--deep) 0%,
+    var(--abyss) 72%
+  );
+}
+
+/* Parallax layers: offset = JS-set --par-x/--par-y × each layer's --depth.
+   Only touches transform. */
+.cafe__layer {
+  position: absolute;
+  will-change: transform;
+  transform: translate3d(
+    calc(var(--par-x, 0) * var(--depth, 0) * 1px),
+    calc(var(--par-y, 0) * var(--depth, 0) * 1px),
+    0
+  );
+}
+
+/* ── Window: looking out onto the tidal sea (background layer) ── */
+.cafe__window {
+  top: 7%;
+  left: 50%;
+  width: min(54vw, 16.5rem);
+  height: 21vh;
+  margin-left: calc(min(54vw, 16.5rem) / -2);
+  overflow: hidden;
+  border-radius: 16px;
+  opacity: 0.72;
+  /* Key: no hard frame, no vignette — feather all four edges with a mask so the
+     window's outer edge dissolves into the wall, instead of being a floating
+     box with a clear border (the bit that felt jarring before). */
+  -webkit-mask-image: radial-gradient(
+    120% 108% at 50% 44%,
+    #000 46%,
+    transparent 92%
+  );
+  mask-image: radial-gradient(120% 108% at 50% 44%, #000 46%, transparent 92%);
+}
+.cafe__sea {
+  position: absolute;
+  inset: -6% 0;
+  background:
+    /* cool moon: very faint, to the left, a glimmer over the night sea */
+    radial-gradient(
+      40% 34% at 40% 26%,
+      color-mix(in srgb, var(--mist) 12%, transparent) 0%,
+      transparent 66%
+    ),
+    /* the window at night: mostly dark (deep/abyss), only a little cold sea
+       colour showing through near the bottom */
+    linear-gradient(
+        to top,
+        color-mix(in srgb, var(--tide) 34%, var(--deep)) 0%,
+        color-mix(in srgb, var(--tide) 14%, var(--deep)) 28%,
+        var(--deep) 56%,
+        color-mix(in srgb, var(--abyss) 50%, var(--deep)) 100%
+      );
+  animation: cafe-sea 9s ease-in-out infinite;
+}
+.cafe__mullion {
+  position: absolute;
+  inset: 0;
+  opacity: 0.7;
+  background:
+    linear-gradient(color-mix(in srgb, var(--deep) 88%, var(--ink)) 0 0) 50% 0 /
+      2px 100% no-repeat,
+    linear-gradient(color-mix(in srgb, var(--deep) 88%, var(--ink)) 0 0) 0 54% /
+      100% 2px no-repeat;
+}
+
+/* ── The warm pool of light (under the lamp, where the content sits) — the
+   light that doesn't move (§7) ── */
+.cafe__pool {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(92vw, 40rem);
+  height: 60vh;
+  margin-left: calc(min(92vw, 40rem) / -2);
+  transform: translateY(-50%);
+  /* A small pool of warm light cast by the lamp: a smaller, dimmer reach →
+     cosy, gathered. */
+  background: radial-gradient(
+    50% 44% at 50% 42%,
+    color-mix(in srgb, var(--lantern) 18%, transparent) 0%,
+    color-mix(in srgb, var(--lantern) 5%, transparent) 42%,
+    transparent 66%
+  );
+  animation: cafe-pool 7s var(--ease-tide) infinite;
+}
+
+/* ── Hanging lamp (still) ── */
+.cafe__lamp {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2.4rem;
+  height: 46%; /* lengthened so the shade hangs below the window, above the lines */
+  transform: translateX(-50%);
+}
+.cafe__lamp-cord {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 76%;
+  background: color-mix(in srgb, var(--deep) 70%, var(--ink));
+}
+.cafe__lamp-shade {
+  position: absolute;
+  top: 74%;
+  left: 50%;
+  width: 2.1rem;
+  height: 0.95rem;
+  margin-left: -1.05rem;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--deep) 56%, var(--ink)) 0%,
+    color-mix(in srgb, var(--lantern) 46%, var(--deep)) 100%
+  );
+  /* A small, low-brightness warm point — cosy, not glaring. */
+  box-shadow:
+    0 0.5rem 1.4rem color-mix(in srgb, var(--lantern) 16%, transparent),
+    0 0.16rem 0.4rem color-mix(in srgb, var(--glow) 28%, transparent);
+}
+
+/* ── Table (foreground) ── */
+.cafe__table {
+  bottom: 0;
+  left: -5%;
+  width: 110%;
+  height: 25vh;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--parchment) 20%, var(--abyss)) 0%,
+    color-mix(in srgb, var(--deep) 68%, var(--abyss)) 58%,
+    transparent 100%
+  );
+}
+
+/* ── Coffee cup + steam (front-most) ── */
+.cafe__cup {
+  bottom: 16vh;
+  left: 50%;
+  width: 3.4rem;
+  height: 2.1rem;
+  margin-left: -1.7rem;
+}
+.cafe__cup::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0 0 42% 42%;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--parchment) 38%, var(--deep)) 0%,
+    color-mix(in srgb, var(--deep) 82%, var(--ink)) 100%
+  );
+  box-shadow: inset 0 0.28rem 0 color-mix(in srgb, var(--ink) 50%, transparent);
+}
+.cafe__steam {
+  position: absolute;
+  bottom: 100%;
+  left: 42%;
+  width: 4px;
+  height: 3rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--mist) 28%, transparent),
+    transparent
+  );
+  filter: blur(2px);
+  opacity: 0;
+  animation: cafe-steam 5s ease-in-out infinite;
+}
+.cafe__steam--2 {
+  left: 58%;
+  height: 2.4rem;
+  animation-delay: 2.2s;
+}
+
+/* ── Content (the short line in the pool of light) ── */
+.cafe__content {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+  max-width: 30rem;
+  text-align: center;
+}
+.cafe__label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+/* The question + quote fade in/out together. */
+.cafe__prompt {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+  transition:
+    opacity var(--dur-base) var(--ease-tide),
+    transform var(--dur-base) var(--ease-tide);
+}
+.cafe__prompt--out {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* The root question: the lead of this page — large, warm, clear, to set you
+   thinking for yourself (§3 think). */
+.cafe__question {
+  max-width: 18ch;
+  font-size: clamp(1.5rem, 5vw, 2.3rem);
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  color: var(--glow);
+}
+
+/* The companion quote: smaller and quieter, like someone keeping you company —
+   no answer, just sitting alongside. */
+.cafe__companion {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  max-width: 28ch;
+}
+.cafe__quote {
+  font-size: clamp(0.95rem, 3vw, 1.18rem);
+  font-style: italic;
+  line-height: 1.65;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--mist) 78%, var(--glow));
+}
+.cafe__author {
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  color: var(--moss);
+}
+.cafe__next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target */
+  margin-top: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  color: var(--moss);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--tide) 55%, transparent);
+  border-radius: 999px;
+  padding: var(--space-2) var(--space-6);
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    border-color var(--dur-base) var(--ease-tide);
+}
+.cafe__next:hover {
+  color: var(--glow);
+  border-color: var(--lantern);
+}
+
+/* ── Navigation ── */
+.cafe__nav {
+  position: absolute;
+  bottom: var(--space-6);
+  left: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-10);
+  width: 100%;
+}
+.cafe__navlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target */
+  padding-inline: var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--moss);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.cafe__navlink:hover {
+  color: var(--mist);
+}
+
+/* English: tighten the uppercase label's tracking. */
+:lang(en) .cafe__label {
+  letter-spacing: 0.14em;
+}
+
+@keyframes cafe-sea {
+  0%,
+  100% {
+    transform: translateY(1.5%);
+  }
+
+  50% {
+    transform: translateY(-1.5%);
+  }
+}
+
+@keyframes cafe-pool {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes cafe-steam {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scaleX(1);
+  }
+
+  30% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-2.4rem) scaleX(1.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cafe__sea,
+  .cafe__pool,
+  .cafe__steam {
+    animation: none;
+  }
+}

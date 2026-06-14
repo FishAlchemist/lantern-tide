@@ -1,0 +1,625 @@
+/* ════════════════════════════════════════════════════════════════
+   Paper-boat shop interior (§1 / §7)  ── a pure-CSS night scene + interaction ──
+   A waterside shop: night sky + stars + a night tide (swelling) + a point of
+   distant light on the horizon (the haven's lamp) + a small jetty in the
+   foreground (warm lamp, the folder, a stack of paper). The folded boat is set
+   on the tide from the jetty, drifts toward that light, and fades — "letting go".
+   ✦ The boat shape borrows boat.css's .boat__* paths (always loaded with the
+   entry chunk).
+   ════════════════════════════════════════════════════════════════ */
+
+.paperboat__scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--abyss);
+}
+
+/* Night sky: blue-black, warming near the horizon. */
+.paperboat__sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--abyss) 0%,
+    color-mix(in srgb, var(--deep) 46%, var(--abyss)) 52%,
+    color-mix(in srgb, var(--deep) 64%, var(--abyss)) 76%,
+    color-mix(in srgb, var(--lantern) 14%, var(--deep)) 100%
+  );
+}
+
+/* The warm afterglow on the horizon (the halo of that distant light). */
+.paperboat__horizon {
+  position: absolute;
+  right: 0;
+  bottom: 26%;
+  left: 0;
+  z-index: 1;
+  height: 30%;
+  background: radial-gradient(
+    50% 100% at 60% 100%,
+    color-mix(in srgb, var(--lantern) 26%, transparent) 0%,
+    color-mix(in srgb, var(--lantern) 8%, transparent) 42%,
+    transparent 72%
+  );
+}
+
+/* Starfield. */
+.paperboat__stars {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.paperboat__star {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--mist);
+  box-shadow: 0 0 2px color-mix(in srgb, var(--mist) 55%, transparent);
+  animation: paperboat-twinkle var(--tw, 3s) ease-in-out infinite;
+}
+
+/* Cool silver moon, upper-left (contrasting the warm light on the right). */
+.paperboat__moon {
+  position: absolute;
+  z-index: 2;
+  top: 13%;
+  left: 20%;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 42% 40%,
+    color-mix(in srgb, var(--mist) 88%, var(--glow)) 0%,
+    color-mix(in srgb, var(--mist) 46%, transparent) 58%,
+    transparent 72%
+  );
+  box-shadow: 0 0 3rem color-mix(in srgb, var(--mist) 20%, transparent);
+}
+
+/* Night tide: at the bottom, swelling with the tide (tide-swell is in
+   style.css, always loaded). */
+.paperboat__sea {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  height: 34%;
+  --tide-amp: 3%;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--tide) 54%, var(--abyss)) 0%,
+    color-mix(in srgb, var(--deep) 76%, var(--tide)) 44%,
+    color-mix(in srgb, var(--deep) 88%, transparent) 80%,
+    transparent 100%
+  );
+  animation: tide-swell 30s ease-in-out infinite;
+}
+/* The reflection the distant light pulls across the water. */
+.paperboat__sea::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    40% 60% at 60% 4%,
+    color-mix(in srgb, var(--lantern) 20%, transparent) 0%,
+    transparent 60%
+  );
+}
+
+/* That point of distant light on the horizon (the haven's lamp; the boat
+   drifts toward it). */
+.paperboat__beacon {
+  position: absolute;
+  bottom: 33%;
+  left: 60%;
+  z-index: 3;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--glow) 0%,
+    var(--lantern) 50%,
+    transparent 78%
+  );
+  box-shadow: 0 0 1.4rem color-mix(in srgb, var(--lantern) 60%, transparent);
+  animation: paperboat-beacon 5.5s ease-in-out infinite;
+}
+
+/* The stage the boat drifts on (above the sea, below the jetty). */
+.paperboat__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* ── The folded boat: floats up (near, large) → sails toward the distant
+   light, smaller and smaller, until it's gone. ── */
+.paperboat__boat {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  width: 64px;
+  margin-left: -32px;
+  color: var(--lantern);
+  opacity: 0;
+  /* Scale toward the centre so the boat recedes into the distance — not toward
+     its base, which collapses the hull downward and reads as diving/sinking. */
+  transform-origin: center;
+  transform: translateY(12px) scale(0.8);
+  transition:
+    opacity 0.6s var(--ease-tide),
+    transform 0.7s var(--ease-settle);
+  filter: drop-shadow(
+    0 0 8px color-mix(in srgb, var(--lantern) 22%, transparent)
+  );
+}
+.paperboat__boat svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.paperboat__boat--ready {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+/* Sailing off: carried slowly by the tide toward the distant light — receding
+   while hugging the water (rising only slightly toward the horizon), with scale
+   doing the depth, visible almost the whole way and fading only near the
+   horizon. Deliberately slow (~8.5s): "carried away by the tide", not flying. */
+.paperboat__boat--adrift {
+  animation: paperboat-sail 8.5s var(--ease-tide) forwards;
+}
+.paperboat__hull {
+  animation: paperboat-bob 4.2s ease-in-out infinite;
+}
+
+/* ── The small jetty in the foreground (silhouette). ── */
+.paperboat__jetty {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 5;
+  height: 16%;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--abyss) 96%, var(--ink)) 0%,
+    color-mix(in srgb, var(--abyss) 74%, transparent) 64%,
+    transparent 100%
+  );
+}
+/* A stack of paper (to the left). */
+.paperboat__papers {
+  position: absolute;
+  bottom: 46%;
+  left: 26%;
+  width: 1.5rem;
+  height: 0.5rem;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--parchment) 72%, var(--deep));
+  box-shadow:
+    -2px 3px 0 -1px color-mix(in srgb, var(--parchment) 52%, var(--deep)),
+    2px 5px 0 -2px color-mix(in srgb, var(--parchment) 40%, var(--deep));
+  transform: rotate(-4deg);
+}
+/* The folder (a small silhouette, touched by the lamplight). */
+.paperboat__keeper {
+  position: absolute;
+  bottom: 44%;
+  left: 40%;
+  width: 0.86rem;
+  height: 1.2rem;
+  border-radius: 45% 45% 35% 35% / 55% 55% 30% 30%;
+  background: color-mix(in srgb, var(--abyss) 66%, var(--ink));
+  box-shadow: 0 0 0.6rem color-mix(in srgb, var(--lantern) 34%, transparent);
+}
+.paperboat__keeper::before {
+  content: "";
+  position: absolute;
+  top: -0.42rem;
+  left: 50%;
+  width: 0.58rem;
+  height: 0.58rem;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: inherit;
+}
+/* The jetty's warm lamp (one of the site's hot spots; breathes). */
+.paperboat__lantern {
+  position: absolute;
+  bottom: 50%;
+  left: 70%;
+  width: 0.85rem;
+  height: 1.05rem;
+  border-radius: 32% 32% 26% 26% / 26% 26% 32% 32%;
+  background: radial-gradient(
+    circle at 50% 42%,
+    color-mix(in srgb, var(--glow) 95%, white) 0%,
+    var(--lantern) 46%,
+    color-mix(in srgb, var(--lantern) 56%, transparent) 82%
+  );
+  box-shadow:
+    0 0 1.4rem color-mix(in srgb, var(--lantern) 58%, transparent),
+    0 0 3.6rem color-mix(in srgb, var(--lantern) 28%, transparent);
+  animation: paperboat-beacon 6s var(--ease-tide) infinite;
+}
+.paperboat__lantern::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 2px;
+  height: 1.6rem;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--abyss) 70%, var(--ink));
+}
+
+/* ── Interactive content ── */
+.paperboat__content {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 30rem;
+  padding: var(--space-6);
+  text-align: center;
+  transform: translateY(-6%);
+}
+.paperboat__label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--lantern) 50%, var(--moss));
+}
+.paperboat__lore {
+  max-width: 22rem;
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  font-style: italic;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--glow) 28%, var(--mist));
+}
+.paperboat__prompt {
+  margin-top: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  color: var(--moss);
+}
+.paperboat__input {
+  width: min(20rem, 80vw);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  text-align: center;
+  color: var(--mist);
+  background: color-mix(in srgb, var(--mist) 8%, transparent);
+  border: none;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--mist) 38%, transparent);
+  border-radius: 4px 4px 0 0;
+  padding: var(--space-2) var(--space-3);
+  transition: border-color var(--dur-base) var(--ease-tide);
+}
+.paperboat__input::placeholder {
+  color: color-mix(in srgb, var(--moss) 70%, transparent);
+}
+.paperboat__input:focus {
+  outline: none;
+  border-bottom-color: var(--lantern);
+}
+/* Live "n / 50" counter under the input: small and quiet, tabular figures so it
+   doesn't jitter, turning warm at the limit so the cap reads clearly. */
+.paperboat__count {
+  margin-top: calc(var(--space-2) * -1);
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--moss) 92%, transparent);
+}
+.paperboat__count--full {
+  color: color-mix(in srgb, var(--glow) 72%, var(--lantern));
+}
+.paperboat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  place-content: center;
+  gap: var(--space-2);
+  min-height: 3.6rem; /* less jump when switching direction ↔ lines */
+  max-width: 24rem;
+}
+.paperboat__chip {
+  position: relative;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: var(--moss);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--moss) 42%, transparent);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    border-color var(--dur-base) var(--ease-tide);
+}
+/* Invisible hit-slop: the chips stay visually delicate but get a ≥44px touch
+   target (they wrap, so this only grows the tap area, not the layout). */
+.paperboat__chip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+.paperboat__chip:hover {
+  color: var(--glow);
+  border-color: color-mix(in srgb, var(--lantern) 60%, transparent);
+}
+/* Direction chips (first step): a touch warmer, slightly emphasised. */
+.paperboat__chip--dir {
+  color: color-mix(in srgb, var(--glow) 55%, var(--mist));
+  border-color: color-mix(in srgb, var(--lantern) 40%, transparent);
+}
+/* Change direction (the back of the second step). */
+.paperboat__chip--back {
+  color: color-mix(in srgb, var(--moss) 85%, transparent);
+  border-style: dashed;
+}
+.paperboat__launch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target */
+  margin-top: var(--space-2);
+  font-family: var(--font-ui);
+  font-size: 0.84rem;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--lantern) 86%, var(--glow));
+  border: none;
+  border-radius: 999px;
+  padding: var(--space-2) var(--space-6);
+  cursor: pointer;
+  box-shadow: 0 0 1.4rem color-mix(in srgb, var(--lantern) 38%, transparent);
+  transition: transform var(--dur-base) var(--ease-tide);
+}
+.paperboat__launch:hover {
+  transform: translateY(-1px);
+}
+/* The sheet of paper with the wish, which folds down into the boat. It appears
+   as a readable note up in the centre, then creases and shrinks down onto the
+   water, where the boat crossfades in (timing in paperboat.ts). The box sits at
+   the boat's resting spot; the sheet's own transform lifts it up to be read,
+   then brings it back down as it folds. */
+.paperboat__fold {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  width: 150px;
+  height: 104px;
+  margin-left: -75px;
+}
+.paperboat__sheet {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px 13px;
+  background: linear-gradient(
+    156deg,
+    color-mix(in srgb, var(--parchment) 96%, white) 0%,
+    color-mix(in srgb, var(--parchment) 70%, var(--deep)) 100%
+  );
+  box-shadow: 0 5px 20px color-mix(in srgb, var(--abyss) 55%, transparent);
+  transform-origin: center bottom;
+  /* 5-point clip-path so it can morph into the boat's 5-point silhouette. */
+  clip-path: polygon(0% 0%, 50% 0%, 100% 0%, 100% 100%, 0% 100%);
+  animation: paperboat-fold 2s var(--ease-tide) forwards;
+}
+.paperboat__sheet-text {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1.4;
+  text-align: center;
+  color: color-mix(in srgb, var(--ink) 84%, transparent);
+  animation: paperboat-foldtext 2s var(--ease-tide) forwards;
+}
+.paperboat__done {
+  font-family: var(--font-body);
+  font-size: clamp(1.1rem, 3.6vw, 1.4rem);
+  font-style: italic;
+  color: color-mix(in srgb, var(--glow) 32%, var(--mist));
+  animation: paperboat-fadein 1.2s var(--ease-tide) both;
+}
+.paperboat__done--soft {
+  font-size: clamp(0.95rem, 3vw, 1.15rem);
+  color: var(--moss);
+  animation-delay: 0.5s;
+}
+
+/* ── Navigation ── */
+.paperboat__nav {
+  position: absolute;
+  bottom: var(--space-6);
+  left: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-10);
+  width: 100%;
+}
+.paperboat__navlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target */
+  padding-inline: var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--moss);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.paperboat__navlink:hover {
+  color: var(--mist);
+}
+
+/* English: the uppercase label runs long, so tighten its tracking. */
+:lang(en) .paperboat__label {
+  letter-spacing: 0.12em;
+}
+
+@keyframes paperboat-twinkle {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes paperboat-beacon {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: scale(0.97);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes paperboat-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateY(-4px) rotate(2deg);
+  }
+}
+
+@keyframes paperboat-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Folding the sheet into the boat: hold flat & readable up in the centre, then
+   crease (the top edge dips into the boat's "M", the sides pull in) while it
+   shrinks and lowers onto the water, fading out as the real boat crossfades in.
+   The clip-path morphs rectangle(5 pts) → the boat silhouette(5 pts). */
+@keyframes paperboat-fold {
+  0% {
+    transform: translateY(-150px) scale(1) rotate(-2deg);
+    clip-path: polygon(0% 0%, 50% 0%, 100% 0%, 100% 100%, 0% 100%);
+  }
+
+  26% {
+    transform: translateY(-150px) scale(1) rotate(-2deg);
+    clip-path: polygon(0% 0%, 50% 0%, 100% 0%, 100% 100%, 0% 100%);
+  }
+
+  45% {
+    transform: translateY(-104px) scale(0.82) rotate(3deg);
+    clip-path: polygon(8% 14%, 50% 26%, 92% 14%, 100% 100%, 0% 100%);
+  }
+
+  64% {
+    transform: translateY(-54px) scale(0.62) rotate(-3deg);
+    clip-path: polygon(16% 20%, 50% 38%, 84% 20%, 76% 90%, 24% 90%);
+  }
+
+  84% {
+    transform: translateY(-8px) scale(0.45) rotate(1deg);
+    clip-path: polygon(22% 23%, 50% 44%, 78% 23%, 65% 77%, 35% 77%);
+  }
+
+  100% {
+    transform: translateY(0) scale(0.42) rotate(0deg);
+    clip-path: polygon(22% 23%, 50% 44%, 78% 23%, 65% 77%, 35% 77%);
+    opacity: 0;
+  }
+}
+
+@keyframes paperboat-foldtext {
+  0%,
+  28% {
+    opacity: 1;
+  }
+
+  46% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The boat sailing off: near and clear → heading toward that distant light on
+   the horizon, shrinking (centre-scaled, so it recedes into the distance) and
+   drifting up toward the horizon line, then fading right as it reaches it —
+   sailing to the horizon and vanishing, not flying up, not diving. */
+@keyframes paperboat-sail {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+
+  78% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(8vw + var(--drift-x, 4px)), -11vh) scale(0.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paperboat__star,
+  .paperboat__sea,
+  .paperboat__beacon,
+  .paperboat__lantern,
+  .paperboat__hull,
+  .paperboat__done {
+    animation: none;
+  }
+
+  /* §12 exception: "let go → the boat sails off, recedes, vanishes" is the
+     heart of this shop, and is user-initiated (it only happens when you press
+     "set it on the tide") — an essential piece of feedback, so it still sails.
+     style.css's global rule snaps all animation to 0.001ms; here we use higher
+     selector specificity to claim this duration back (single, smooth, no
+     rotation, low motion-sickness risk). */
+  .paperboat__boat--adrift {
+    animation-duration: 8.5s !important;
+    animation-timing-function: var(--ease-tide) !important;
+    animation-iteration-count: 1 !important;
+  }
+}

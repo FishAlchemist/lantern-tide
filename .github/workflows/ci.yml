@@ -1,0 +1,23 @@
+name: CI
+
+# The quality gate on every push to main and every pull request. The repo is
+# public, so GitHub-hosted runners are free with no minutes cap. The gate itself
+# lives in the reusable test.yml — shared with the deploy gate — so "what CI runs"
+# and "what must pass before a deploy" can never drift apart. CI never publishes;
+# deploying is separate and on-demand only (deploy.yml).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# One run per ref; a newer push cancels the in-flight one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml

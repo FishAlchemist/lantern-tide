@@ -1,0 +1,7 @@
+# §10: don't be a data source for bots.
+# The front door is the entrance and may be indexed; nothing else is offered to machines.
+# (Inner content is only fetched after entering, so a crawler gets an empty shell.)
+
+User-agent: *
+Allow: /$
+Disallow: /

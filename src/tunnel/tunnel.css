@@ -1,0 +1,62 @@
+/* ════════════════════════════════════════════════════════════════
+   Tunnel (§5 option A: pure CSS — the field of light of a train leaving a tunnel)
+   ────────────────────────────────────────────────────────────────
+   Just "one field of light, brightest at the centre, fading softly outward",
+   grown smoothly with transform: scale. No concentric rings, no dark ring, no
+   hard edge — only transform / opacity (§6), the whole thing on the GPU
+   compositor, so scaling up has no gradient banding.
+   ════════════════════════════════════════════════════════════════ */
+
+.tunnel {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  /* The dark inside the tunnel: a deep that's slightly brighter at the centre,
+     sinking deepest at the edges — read as the dark of the tunnel walls. */
+  background: radial-gradient(
+    circle at 50% 47%,
+    var(--deep) 0%,
+    var(--abyss) 62%
+  );
+  opacity: 0;
+  /* While dissolving it covers the just-mounted space → §3 cross-fade (timed by main). */
+  z-index: 10;
+  transition: opacity 500ms var(--ease-tide);
+}
+.tunnel--visible {
+  opacity: 1;
+}
+
+/* Exit light: a single smooth orb. Brightest glow at centre → lantern → fades
+   softly to transparent; "brighter toward the inner ring" is guaranteed by the
+   gradient itself; scale/brighten are set by JS via transform/opacity. */
+.tunnel__light {
+  position: absolute;
+  top: 47%;
+  left: 50%;
+  width: 54vmin;
+  height: 54vmin;
+  margin: -27vmin 0 0 -27vmin;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--glow) 0%,
+    var(--lantern) 36%,
+    transparent 70%
+  );
+  opacity: 0.42;
+  transform: scale(0.16);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* §12: on skip/reduced, main doesn't walk the tunnel anyway; as a safety net
+   here — if it is reached, don't run the scale-up, just let the light be (the
+   instant flow in main passes through quickly). */
+@media (prefers-reduced-motion: reduce) {
+  .tunnel__light {
+    transform: scale(2.4);
+    opacity: 1;
+  }
+}

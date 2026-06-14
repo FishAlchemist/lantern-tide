@@ -1,0 +1,4 @@
+# pnpm 11 moved build-script approval here (it no longer reads package.json's "pnpm" field).
+# esbuild needs its postinstall to fetch the platform binary so vite can run.
+allowBuilds:
+  esbuild: true

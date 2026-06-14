@@ -1,0 +1,381 @@
+/* ════════════════════════════════════════════════════════════════
+   Library interior (§7: cool, orderly, ink-on-paper)
+   ── A single "lit page" (cooler parchment) floating in the dark; a sticky
+      top bar to leave at any time; below it a categorised catalog, ink serif,
+      orderly and restrained.
+   Relies on spaces.css's .space / .space--visible base (loaded via the street).
+   ════════════════════════════════════════════════════════════════ */
+
+.space--library.library {
+  /* Heights the sticky bar + (mobile) index strip occupy, so headings and
+     scroll-jumps can clear them. */
+  --lib-bar-h: 2.9rem;
+  --lib-index-h: 2.7rem;
+
+  display: block; /* cancel the base centring grid: stack top-down, scroll the whole block */
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: radial-gradient(
+    140% 100% at 50% 0%,
+    var(--deep) 0%,
+    var(--abyss) 72%
+  );
+  scrollbar-width: none;
+}
+.space--library.library::-webkit-scrollbar {
+  display: none;
+}
+
+/* Thin top bar: back / title / set out. Sticky, stays at the top edge while the
+   long catalog scrolls. */
+.library__bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  /* Extra right padding clears the fixed language toggle (top-right); wide
+     enough for its longest label ("English"). */
+  padding: var(--space-4) calc(var(--space-6) + 4.6rem) var(--space-4)
+    var(--space-6);
+  background: color-mix(in srgb, var(--abyss) 82%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid color-mix(in srgb, var(--tide) 40%, transparent);
+}
+.library__bar-title {
+  min-width: 0; /* let the flex item shrink so the ellipsis can engage */
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--mist);
+}
+.library__navlink {
+  position: relative;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: var(--moss);
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.library__navlink:hover {
+  color: var(--glow);
+}
+/* Invisible hit-slop: ≥44px touch target without thickening the slim top bar. */
+.library__navlink::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+
+/* English: the bar's labels run longer, so shrink them to fit the thin bar. */
+:lang(en) .library__bar-title,
+:lang(en) .library__navlink {
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Shelf jump-index / catalog (§9 quick-find)
+   ── Phone: a sticky strip under the bar; tapping "Contents" drops the shelf
+      list as an overlay panel (so it doesn't shove the catalog).
+   ── Wide screens: pinned as a side rail beside the page (see the media query
+      at the foot of this file); the toggle is hidden, the list always shown.
+   ════════════════════════════════════════════════════════════════ */
+.library__index {
+  position: sticky;
+  top: var(--lib-bar-h);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  background: color-mix(in srgb, var(--abyss) 82%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid color-mix(in srgb, var(--tide) 26%, transparent);
+}
+.library__index-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--lib-index-h); /* touch target */
+  padding-inline: var(--space-1);
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--moss);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.library__index-toggle::after {
+  content: "▾";
+  font-size: 0.9em;
+  transition: transform var(--dur-base) var(--ease-tide);
+}
+.library__index--open .library__index-toggle::after {
+  transform: rotate(180deg);
+}
+.library__index-toggle:hover {
+  color: var(--glow);
+}
+
+/* The shelf list: an overlay panel on phones, hidden until opened. */
+.library__index-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 6;
+  display: none;
+  width: min(20rem, 86vw);
+  max-height: 60vh;
+  margin: 0;
+  padding: var(--space-2);
+  overflow-y: auto;
+  list-style: none;
+  background: color-mix(in srgb, var(--abyss) 94%, var(--deep));
+  border: 1px solid color-mix(in srgb, var(--tide) 30%, transparent);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--abyss) 70%, transparent);
+}
+.library__index--open .library__index-list {
+  display: block;
+}
+.library__index-link {
+  display: block;
+  width: 100%;
+  min-height: 44px; /* touch target */
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-align: left;
+  color: color-mix(in srgb, var(--mist) 82%, transparent);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    background var(--dur-base) var(--ease-tide);
+}
+.library__index-link:hover {
+  color: var(--glow);
+  background: color-mix(in srgb, var(--tide) 24%, transparent);
+}
+/* "You are here": warm text + a small lantern bar on the leading edge. */
+.library__index-link--active {
+  color: var(--glow);
+  box-shadow: inset 3px 0 0 var(--lantern);
+}
+
+/* The lit page: cooler parchment (mixed with mist), floating in the dark (§7). */
+.library__page {
+  position: relative;
+  width: min(46rem, 92vw);
+  margin: var(--space-10) auto var(--space-24);
+  padding: clamp(var(--space-6), 5vw, var(--space-16));
+  color: var(--ink);
+  background: color-mix(in srgb, var(--parchment) 86%, var(--mist));
+  border-radius: 4px;
+  box-shadow: 0 1.5rem 5rem color-mix(in srgb, var(--abyss) 72%, transparent);
+}
+/* §7 texture: a faint paper tooth on the lit page (its dark specks give the
+   parchment grain). Sits under the text (z:0, first child); rounds with the
+   page; never animates. A touch stronger than the dark grain to read on the
+   lighter surface. */
+.library__page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background-image: var(--grain);
+  background-size: 160px 160px;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+/* A point of warm light on the table (the site's one warm point, §7). Breathes
+   on its own, no dependency on other files. */
+.library__lantern {
+  width: 2.3rem;
+  height: 2.3rem;
+  margin: 0 auto var(--space-4);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 45%,
+    var(--glow) 0%,
+    var(--lantern) 42%,
+    transparent 72%
+  );
+  filter: blur(1px);
+  animation: lib-breathe 7s var(--ease-tide) infinite;
+}
+
+.library__intro {
+  max-width: 34ch;
+  margin: 0 auto var(--space-10);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.7;
+  text-align: center;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+/* Shelf headings: orderly, restrained, and sticky — while scrolling a category
+   they stick just under the top bar (~3rem), so you always know which category
+   you're in. Same background as the page, z-index above the entries so the list
+   scrolls beneath. */
+.library__heading {
+  position: sticky;
+  /* Clear the bar + the mobile index strip; scroll-jumps land just below them. */
+  top: calc(var(--lib-bar-h) + var(--lib-index-h));
+  scroll-margin-top: calc(
+    var(--lib-bar-h) + var(--lib-index-h) + var(--space-2)
+  );
+  z-index: 2;
+  margin: var(--space-10) 0 var(--space-4);
+  padding: var(--space-3) var(--space-2) var(--space-2);
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  /* 70% (was 60%): a small uppercase heading needs to clear 4.5:1 on the page
+     to stay "low-contrast but clear" (§7). */
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+  background: color-mix(in srgb, var(--parchment) 86%, var(--mist));
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.library__list {
+  display: grid;
+}
+
+/* One entry = a clickable card: ink serif, ruled, restrained. */
+.library__entry {
+  display: block;
+  padding: var(--space-4) var(--space-2);
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  transition: background var(--dur-base) var(--ease-tide);
+}
+.library__entry:hover {
+  background: color-mix(in srgb, var(--lantern) 12%, transparent);
+}
+/* On the light page amber is too low in contrast for a focus ring, so the
+   keyboard ring is ink instead; it sits just inside the full-width row. */
+.library__entry:focus-visible {
+  background: color-mix(in srgb, var(--lantern) 12%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ink) 72%, transparent);
+  outline-offset: -3px;
+}
+.library__entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+}
+.library__entry-title {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.library__entry:hover .library__entry-title,
+.library__entry:focus-visible .library__entry-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.library__entry-author {
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  /* 66% (was 50%): clears 4.5:1; size + sans + tracking keep it quieter than
+     the title without dropping below legible (§7 low-contrast but clear). */
+  color: color-mix(in srgb, var(--ink) 66%, transparent);
+}
+.library__entry-blurb {
+  margin-top: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--ink) 66%, transparent);
+}
+
+@keyframes lib-breathe {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .library__lantern {
+    animation: none;
+  }
+}
+
+/* Wide screens: there's room beside the centred page, so the index becomes a
+   pinned side rail in the left gutter — always open, no toggle. Anchored to the
+   page's left edge (the page is 46rem, centred, so its left edge is 23rem left
+   of centre). The breakpoint leaves enough gutter for the rail + a gap. */
+@media (width >= 75rem) {
+  .library__index {
+    position: fixed;
+    top: 6rem;
+    right: calc(50% + 23rem + var(--space-6));
+    z-index: 6;
+    display: block;
+    width: 10rem;
+    max-height: calc(100dvh - 9rem);
+    padding: 0;
+    overflow-y: auto;
+    background: transparent;
+    backdrop-filter: none;
+    border-bottom: none;
+    scrollbar-width: none;
+  }
+  .library__index-toggle {
+    display: none;
+  }
+  .library__index-list {
+    position: static;
+    display: block;
+    width: auto;
+    max-height: none;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  /* No strip above the content column → headings stick just under the bar. */
+  .library__heading {
+    top: var(--lib-bar-h);
+    scroll-margin-top: calc(var(--lib-bar-h) + var(--space-2));
+  }
+}

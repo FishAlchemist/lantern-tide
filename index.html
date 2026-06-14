@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- The front door is the one indexable page: its copy is written straight
+         into the HTML (not grown by JS), so a crawler that doesn't run JS can
+         still read it. The static copy is English so this file (and every file
+         but the zh-Hant locale bundle) stays free of Chinese; on load main.ts
+         applies the stored locale, defaulting a first-time visitor with no saved
+         preference to Traditional Chinese — the site's mother tongue. -->
+    <title>Lantern Tide</title>
+    <meta
+      name="description"
+      content="A silent observer of the shifting tides, distilling the weight of the deep into a single steady light."
+    />
+
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- ───────────────────────────────────────────────────────────
+         Front door / home (§10)
+         The one piece of content search engines can index and link to.
+         "Enter" is a natural human threshold (§1 key insight) — the click
+         simultaneously:
+           1. is the user gesture audio autoplay restrictions require (§4 Howler)
+           2. triggers the tunnel sequence (which is also the loader, §3 / §6)
+         ─────────────────────────────────────────────────────────── -->
+    <main id="threshold" class="threshold">
+      <h1 class="threshold__title">Lantern Tide</h1>
+      <p class="threshold__tagline">
+        A silent observer of the shifting tides, distilling the weight of the
+        deep into a single steady light.
+      </p>
+
+      <button
+        id="enter"
+        class="enter"
+        type="button"
+        aria-label="Walk through the tunnel and enter"
+      >
+        Enter
+      </button>
+
+      <!-- §12 accessibility: skip the animation / enter directly. Matters more
+           under reduced motion. -->
+      <button id="skip" class="enter enter--ghost" type="button">
+        Skip the animation
+      </button>
+
+      <!-- §7 colophon: a quiet vibe-code note + a link to the source. Static
+           English (main.ts swaps it to the active locale on load). It lives
+           inside #threshold, so it dissolves with the door on entry. -->
+      <div class="threshold__colophon">
+        <p class="threshold__note">
+          This island is a lantern lit on a single passing thought, while it was
+          still glowing — a piece of vibe coding, made only to let the idea
+          shine first, not a finished or careful work. Its words and contents
+          may be inaccurate or unverified; take it as a small light drifting in
+          on the tide, not a source to rely on.
+        </p>
+        <a
+          class="threshold__source"
+          href="https://github.com/FishAlchemist/lantern-tide"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Source on GitHub
+        </a>
+      </div>
+    </main>
+
+    <!-- The tunnel + space DOM is grown by main.ts on entry (§10: content is
+         fetched / mounted only after enteredThisSession is true). -->
+    <div id="stage" class="stage" aria-hidden="true"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

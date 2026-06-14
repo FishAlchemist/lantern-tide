@@ -1,0 +1,33 @@
+name: Test
+
+# Reusable quality gate (check + e2e) — the single source of truth for "what must
+# pass." CI (ci.yml, on push/PR) and the deploy (deploy.yml, before publishing a
+# tag) both call this, so a commit is tested the same way wherever it runs and the
+# deploy can gate on it. Not triggered on its own — only via workflow_call.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Actions are pinned to a full commit SHA (supply-chain hardening), each on
+      # a version that has been out for well over a week; the trailing tag is the
+      # human-readable version. Bump these deliberately, never auto-update.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0 (the pnpm binary version still comes from package.json packageManager)
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # typecheck + eslint + stylelint + prettier + unit tests (Vitest)
+      - run: pnpm run check
+      # e2e (Playwright): build, install the Chrome the config pins, then run.
+      # playwright.config.ts's webServer serves the build and tears it down.
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps chrome
+      - run: pnpm run test:e2e
