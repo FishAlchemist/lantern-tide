@@ -79,6 +79,6 @@ The aesthetic floor (quiet, warm, slow, low-contrast but clear; dark as the grou
 | Locale bundles                  | `src/i18n/` (`zh-Hant` is the default)                                                                                     |
 | Design tokens                   | `src/style.css`                                                                                                            |
 | Front-door-only indexing        | `public/robots.txt`                                                                                                        |
-| Test gate (check + e2e)         | `.github/workflows/test.yml` (reusable; the single source of truth for "what must pass")                                   |
-| CI                              | `.github/workflows/ci.yml` (push to main / PRs → runs the test gate)                                                       |
-| GitHub Pages deploy             | `.github/workflows/deploy.yml` (on-demand `v*` tag / manual; runs the test gate first, deploys only if green)              |
+| Quality gate (check + e2e)      | `.github/workflows/ci.yml` (push to main / PRs → `check` and `e2e` run as parallel jobs)                                   |
+| Shared CI/deploy setup          | `.github/actions/setup/` (composite: pnpm + Node + install; each job runs `actions/checkout` first)                        |
+| GitHub Pages deploy             | `.github/workflows/deploy.yml` (on-demand `v*` tag / manual; runs `check` + `e2e`, then build + deploy only if green)      |

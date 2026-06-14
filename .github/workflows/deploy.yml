@@ -1,7 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Deploy on demand only: push a version tag (e.g. v1.0.0) when you're ready to
+  # Deploy on demand only: push a version tag (e.g. v0.1.0) when you're ready to
   # publish, or run this workflow manually from the Actions tab. Plain pushes to
   # main run CI (.github/workflows/ci.yml) but never deploy.
   push:
@@ -20,25 +20,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # The same quality gate CI runs, re-run here on the tagged commit — so only a
-  # commit whose check + e2e pass can be published.
-  test:
-    uses: ./.github/workflows/test.yml
-
-  build:
-    needs: test
+  # The same gate CI runs, re-run here on the tagged commit: `check` and `e2e`
+  # in parallel. `build` only starts once both pass, so only a commit whose gate
+  # is green can be published.
+  check:
     runs-on: ubuntu-latest
     steps:
-      # Actions are pinned to a full commit SHA (supply-chain hardening), each on
-      # a version that has been out for well over a week; the trailing tag is the
-      # human-readable version. Bump these deliberately, never auto-update.
+      # checkout is pinned to a SHA; the rest of the setup lives in the shared
+      # composite action (.github/actions/setup), where the pin policy is noted.
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0 (the pnpm binary version still comes from package.json packageManager)
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
+      - run: pnpm run check
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: ./.github/actions/setup
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps chrome
+      - run: pnpm run test:e2e
+
+  build:
+    needs: [check, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: ./.github/actions/setup
       - run: pnpm run build:pages # sets base to /lantern-tide/ and emits 404.html
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1

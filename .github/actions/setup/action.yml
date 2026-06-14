@@ -1,0 +1,17 @@
+# Shared setup for every CI/deploy job: pnpm, Node, and dependencies.
+# Run actions/checkout in the job first — a local action needs the repo present.
+name: Setup
+description: Install pnpm, Node 22, and project dependencies (frozen lockfile).
+runs:
+  using: composite
+  steps:
+    # Actions are pinned to a full commit SHA (supply-chain hardening), each on a
+    # version that has been out for well over a week; the trailing tag is the
+    # human-readable version. Bump these deliberately, never auto-update.
+    - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0 (the pnpm binary version still comes from package.json packageManager)
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: 22
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+      shell: bash

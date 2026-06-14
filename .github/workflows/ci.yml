@@ -1,10 +1,10 @@
 name: CI
 
 # The quality gate on every push to main and every pull request. The repo is
-# public, so GitHub-hosted runners are free with no minutes cap. The gate itself
-# lives in the reusable test.yml — shared with the deploy gate — so "what CI runs"
-# and "what must pass before a deploy" can never drift apart. CI never publishes;
-# deploying is separate and on-demand only (deploy.yml).
+# public, so GitHub-hosted runners are free with no minutes cap. The two jobs
+# run in parallel: `check` (typecheck, lint, stylelint, format, unit tests) and
+# `e2e` (build + Playwright). CI never publishes; deploying is separate and
+# on-demand only (deploy.yml), which runs the same two jobs as its gate.
 on:
   push:
     branches: [main]
@@ -19,5 +19,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    uses: ./.github/workflows/test.yml
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # checkout is pinned to a SHA; the rest of the setup lives in the shared
+      # composite action (.github/actions/setup), where the pin policy is noted.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: ./.github/actions/setup
+      # typecheck + eslint + stylelint + prettier + unit tests (Vitest)
+      - run: pnpm run check
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: ./.github/actions/setup
+      # build, install the Chrome the config pins, then run Playwright.
+      # playwright.config.ts's webServer serves the build and tears it down.
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps chrome
+      - run: pnpm run test:e2e
