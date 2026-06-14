@@ -24,7 +24,7 @@ jobs:
     steps:
       # checkout is pinned to a SHA; the rest of the setup lives in the shared
       # composite action (.github/actions/setup), where the pin policy is noted.
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: ./.github/actions/setup
       # typecheck + eslint + stylelint + prettier + unit tests (Vitest)
       - run: pnpm run check
@@ -32,7 +32,7 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: ./.github/actions/setup
       # build, install the Chrome the config pins, then run Playwright.
       # playwright.config.ts's webServer serves the build and tears it down.
