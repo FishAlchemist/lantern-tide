@@ -1,0 +1,63 @@
+/* ════════════════════════════════════════════════════════════════
+   Reduced motion (§12) — the OS preference and the page-wide "simple"
+   choice. Loaded last so these overrides win the cascade.
+   ════════════════════════════════════════════════════════════════ */
+
+/* §12 reduced-motion (OS level): by default no movement, only a fade (forward
+   motion through a tunnel is a classic motion-sickness trigger). Exception: when
+   the page is set to full motion — <html data-motion="full">, from the motion
+   toggle or from pressing "Enter" — we don't suppress; an explicit human choice
+   wins. (The toggle's "simple" choice gets the equivalent stilling from the
+   attribute-keyed copy just below this block, so it matches the OS setting.)
+   :where() drops the data-motion check's specificity to 0 so
+   individual essential exceptions (e.g. the boat's .paperboat__boat--adrift)
+   can still override with higher specificity. */
+@media (prefers-reduced-motion: reduce) {
+  html:where(:not([data-motion="full"])) *,
+  html:where(:not([data-motion="full"])) *::before,
+  html:where(:not([data-motion="full"])) *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--dur-base) !important;
+  }
+
+  /* §12 exception: the §12 rationale above targets vection — the tunnel's
+     forward motion. The front door's tide swell and the lantern's breath are
+     neither: a slow, small vertical drift and a faint opacity breath, both very
+     low motion-sickness risk. The tide is also the front door's whole identity
+     (§1 "already in the tide"), so stilling it to a dead frame reads as broken,
+     not calm — keep them alive even before the visitor opts into full motion.
+     Deliberately the SAME params as the chosen-motion default (32s / amp 9%,
+     7s breath), not a softer variant: pressing "Enter" flips data-motion to
+     "full", which swaps these rules out for the base ones — if the params
+     differed, the tide would lurch at that instant instead of freezing cleanly
+     in place (see .threshold--leaving below). Higher specificity than the
+     blanket rule above (.threshold class vs the universal *), so it wins.
+     Everything else — tunnel, parallax, meteors, auto-advance — stays stilled
+     until "Enter" sets data-motion="full". */
+  html:where(:not([data-motion="full"])) .threshold::before {
+    animation: tide-swell 32s ease-in-out infinite !important;
+  }
+  html:where(:not([data-motion="full"])) .threshold::after {
+    animation: threshold-glow 7s var(--ease-tide) infinite !important;
+  }
+}
+
+/* The same stilling, but as an explicit page-wide choice — the motion toggle's
+   "simple" (<html data-motion="reduced">) — so it applies regardless of the OS
+   setting. Mirrors the OS rule above; the same §12 gentle exceptions shine
+   through (the front-door tide and glow here; the stillroom's breath keeps its
+   own inline-!important duration, so it still swells, gently). */
+:where(html[data-motion="reduced"]) *,
+:where(html[data-motion="reduced"]) *::before,
+:where(html[data-motion="reduced"]) *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: var(--dur-base) !important;
+}
+html[data-motion="reduced"] .threshold::before {
+  animation: tide-swell 32s ease-in-out infinite !important;
+}
+html[data-motion="reduced"] .threshold::after {
+  animation: threshold-glow 7s var(--ease-tide) infinite !important;
+}

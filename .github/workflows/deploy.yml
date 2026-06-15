@@ -1,11 +1,14 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Deploy on demand only: push a version tag (e.g. v0.1.0) when you're ready to
-  # publish, or run this workflow manually from the Actions tab. Plain pushes to
-  # main run CI (.github/workflows/ci.yml) but never deploy.
-  push:
-    tags: ["v*"]
+  # Deploy when a GitHub Release is published. Publishing a Release carries its
+  # version tag (e.g. v0.3.0) and the human-facing notes together, so the
+  # release and the deploy it triggers always line up. You can also run this
+  # manually from the Actions tab. Plain pushes to main run CI
+  # (.github/workflows/ci.yml) but never deploy; a tag on its own no longer
+  # deploys either — publish a Release.
+  release:
+    types: [published]
   workflow_dispatch:
 
 # Let the deploy job publish to Pages over OIDC; everything else read-only.

@@ -1,0 +1,61 @@
+/* ════════════════════════════════════════════════════════════════
+   Lantern Tide · design-system tokens (§7)
+   ────────────────────────────────────────────────────────────────
+   The tokens are the anchors locked in by the plan. The base below is the
+   minimum to make the skeleton run; richer visuals live in each space.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Colour tokens (§7) ── dark as ground, warm as the lit figure ── */
+  --abyss: #0c1518; /* deepest deep — the tunnel's darkest, the deepest background */
+  --deep: #13252a; /* deep sea / tunnel wall, dark surfaces */
+  --tide: #2a4a51; /* mid water, the drifting tide (secondary dark) */
+  --lantern: #e9a24c; /* ✦ the signature warm amber light (the one hot spot) */
+  --glow: #f3ce94; /* the light's halo, warm highlight */
+  --parchment: #e7dcc6; /* warm parchment — reading surface / a lit interior */
+  --ink: #1a1714; /* warm near-black — text on parchment */
+  --mist: #cbd3ce; /* soft text on dark grounds */
+  --moss: #7e8c76; /* hazed sage green — a bridge between dark and warm (sparingly) */
+
+  /* ── Spacing scale (§7) 4px base ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-10: 40px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* ── Motion tokens (§7) ── */
+  --dur-micro: 200ms;
+  --dur-base: 400ms;
+  --dur-slow: 800ms;
+  --dur-enter: 1300ms; /* entrance 1200–1500ms; shortened return in §10 */
+  --ease-tide: cubic-bezier(
+    0.25,
+    0.1,
+    0.25,
+    1
+  ); /* slow, long tail, no overshoot */
+  --ease-settle: cubic-bezier(0.2, 0, 0, 1); /* for settling into place */
+  /* The breath pacer's curve: a symmetric, sine-like ease-in-out — gentle at
+     each end, fastest in the middle. Unlike --ease-tide (front-loaded, a fast
+     early rise), it never pops the in-breath visual ahead of the breath, so it
+     doesn't cue a rushed in-breath; the same curve eases the out-breath's
+     release. (§7 / breathing-pacer entrainment.) */
+  --ease-breath: cubic-bezier(0.37, 0, 0.63, 1);
+
+  /* ── Type (§7) ── system serif placeholder; loading Newsreader / Noto
+     Serif TC is a later call (self-host vs Google Fonts). ── */
+  --font-body: "Newsreader", "Noto Serif TC", "Georgia", "Songti TC", serif;
+  --font-ui: "Inter", "IBM Plex Sans", system-ui, sans-serif;
+  --text-base: 18px;
+  --leading: 1.75;
+
+  /* ── Texture (§7) ── one neutral fractal-noise tile (procedural SVG, ~0.5KB,
+     no network asset — honours §6 "don't ship heavy assets"). Laid over
+     surfaces at a very low opacity: its light specks lift the dark off
+     dead-black, its dark specks give the parchment a faint paper tooth. */
+  --grain: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='160'%20height='160'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.8'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type='discrete'%20tableValues='1%201'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23g)'/%3E%3C/svg%3E");
+}

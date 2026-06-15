@@ -18,7 +18,7 @@
 
 等潮汐之燈走到一個配得上叫 1.0.0 的狀態，它會離開 0.x 這條線，改採日期版本。從那之後，版本就是它被切出來的那個日期，寫成 `vYYYYMMDD` —— 例如 `v20260614`。
 
-- tag 仍維持 `v*` 的形狀，所以部署工作流（在 `v*` tag 上觸發）跨過這個轉換也照常運作，不必改。
+- tag 仍維持 `v*` 的形狀，所以發佈 Release（部署工作流的觸發條件）跨過這個轉換也照常運作，不必改。
 - 日期說的是「何時切的」，不是「跟上一版差在哪」；差在哪仍由各版的 release notes 交代。
 
 ## 轉換之後：一張相容矩陣
@@ -27,6 +27,6 @@
 
 ## tag、release、部署怎麼對上
 
-- 一個 `v*` tag 就是一次發佈的單位。推一個上去，會觸發有關卡的部署（`.github/workflows/deploy.yml`）：測試關卡在被打 tag 的那個 commit 上跑，只有通過的 commit 才會發佈。
+- 一個 `v*` tag 就是一次發佈的單位，以一個 GitHub Release 的形式發佈出去。發佈那個 Release，會觸發有關卡的部署（`.github/workflows/deploy.yml`）：測試關卡在被打 tag 的那個 commit 上跑，只有通過的 commit 才會發佈。
 - 綁在那個 tag 上的 GitHub Release 帶的是給人看的 notes；同一份文字也留在 [docs/releases/](./releases/)。
-- 一般推到 `main` 不會部署，只會跑 CI。
+- 一般推到 `main` 不會部署，只會跑 CI。光是一個 tag 也不會部署 —— 部署要等 Release 發佈。

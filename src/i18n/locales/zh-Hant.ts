@@ -29,6 +29,11 @@ const bundle: LocaleBundle = {
       detailed: "詳細",
       simple: "簡約",
     },
+    version: {
+      label: "版本",
+      commit: "提交",
+      notes: "這一版的記事",
+    },
     nav: {
       backToStreet: "← 回到街上",
       setOut: "再出發,回到潮裡",

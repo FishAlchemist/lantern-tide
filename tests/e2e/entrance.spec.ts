@@ -739,3 +739,38 @@ test("declaration: written out on the front door, behind a button in every space
   await page.locator(".colophon__close").click();
   await expect(page.locator(".colophon__panel")).toBeHidden();
 });
+
+test("version badge: a corner chip shows the build version; tap it for the commit and a link to the release notes", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  // The chip sits in the corner from the front door on, labelled like the tag.
+  const chip = page.locator(".version-badge__chip");
+  await expect(chip).toBeVisible();
+  await expect(chip).toHaveText(/^v\d+\.\d+\.\d+/);
+
+  // The panel stays closed until the chip is tapped.
+  const panel = page.locator(".version-badge__panel");
+  await expect(panel).toBeHidden();
+  await chip.click();
+  await expect(panel).toBeVisible();
+  await expect(chip).toHaveAttribute("aria-expanded", "true");
+
+  // The commit SHA is shown and links out to the commit on GitHub.
+  const sha = page.locator(".version-badge__sha");
+  await expect(sha).not.toBeEmpty();
+  await expect(sha).toHaveAttribute("href", /\/commit\/[0-9a-f]{7,40}$/);
+
+  // The release-notes link points at this version's GitHub Release tag page.
+  const notes = page.locator(".version-badge__notes");
+  await expect(notes).toHaveAttribute(
+    "href",
+    /\/releases\/tag\/v\d+\.\d+\.\d+$/,
+  );
+
+  // Dismiss with Escape; the panel closes and the chip reads collapsed again.
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden();
+  await expect(chip).toHaveAttribute("aria-expanded", "false");
+});

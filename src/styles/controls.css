@@ -1,0 +1,245 @@
+/* ════════════════════════════════════════════════════════════════
+   Global controls — the small, persistent UI that frames every space:
+   the in-space declaration, the top-right preference toggles, and the
+   corner build badge. (UI "chrome", but named for what it holds.)
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── In-space declaration (§7) ─────────────────────────────────────────────
+   The same vibe-code note as the front door, but tucked behind a button on
+   every space so it never clutters the scene. Shown only while a space is
+   active (tied to #stage.stage--active); at the front door it stays hidden,
+   since the note is shown inline there. */
+.colophon {
+  display: none;
+}
+.stage--active ~ .colophon {
+  display: block;
+}
+.colophon__toggle {
+  position: fixed;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 40;
+  min-height: 28px;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--moss);
+  background: color-mix(in srgb, var(--abyss) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--moss) 34%, transparent);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    border-color var(--dur-base) var(--ease-tide);
+}
+.colophon__toggle:hover {
+  color: var(--glow);
+  border-color: color-mix(in srgb, var(--lantern) 55%, transparent);
+}
+/* Invisible hit-slop: keep the chip slim but give it a ≥44px touch target. */
+.colophon__toggle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+/* The library fills its top-left with a sticky bar and a catalog index, so in
+   that space only, move the toggle to the bottom-left, where nothing sits. */
+#stage:has(.space--library) ~ .colophon .colophon__toggle {
+  top: auto;
+  bottom: var(--space-3);
+}
+.colophon__panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  place-content: center;
+  justify-items: center;
+  padding: var(--space-6);
+  background: color-mix(in srgb, var(--abyss) 72%, transparent);
+}
+.colophon--open .colophon__panel {
+  display: grid;
+}
+.colophon__card {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  max-width: 40ch;
+  padding: var(--space-10);
+  text-align: center;
+  background: color-mix(in srgb, var(--deep) 92%, var(--abyss));
+  border: 1px solid color-mix(in srgb, var(--tide) 50%, transparent);
+  border-radius: 16px;
+}
+.colophon__note {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--mist);
+}
+.colophon__source {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--moss);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, var(--moss) 45%, transparent);
+  text-underline-offset: 3px;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.colophon__source:hover {
+  color: var(--glow);
+}
+.colophon__close {
+  min-height: 36px;
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  color: var(--moss);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--moss) 34%, transparent);
+  border-radius: 999px;
+  padding: var(--space-2) var(--space-6);
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    border-color var(--dur-base) var(--ease-tide);
+}
+.colophon__close:hover {
+  color: var(--mist);
+  border-color: color-mix(in srgb, var(--mist) 40%, transparent);
+}
+
+/* Global preference toggles — small, unobtrusive, always reachable (top-right
+   cluster). Language shows the language you'd switch TO (English ↔ Chinese);
+   motion shows the current detailed/simple state and flips it. */
+.controls {
+  position: fixed;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.lang-toggle,
+.motion-toggle,
+.version-badge__chip {
+  position: relative;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--moss);
+  background: color-mix(in srgb, var(--abyss) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--moss) 34%, transparent);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    border-color var(--dur-base) var(--ease-tide),
+    background var(--dur-base) var(--ease-tide);
+}
+.lang-toggle:hover,
+.motion-toggle:hover,
+.version-badge__chip:hover {
+  color: var(--glow);
+  border-color: color-mix(in srgb, var(--lantern) 55%, transparent);
+}
+/* Motion "on" (detailed): a warm, filled chip so the state reads at a glance;
+   "off" (simple) keeps the plain dim outline. */
+.motion-toggle[aria-pressed="true"] {
+  color: var(--glow);
+  border-color: color-mix(in srgb, var(--lantern) 60%, transparent);
+  background: color-mix(in srgb, var(--lantern) 18%, var(--abyss) 55%);
+}
+/* Invisible hit-slop: keep the chips visually slim, but give each a ≥44px touch
+   target. The pseudo is part of the button box, so taps on it still fire it. */
+.lang-toggle::after,
+.motion-toggle::after,
+.version-badge__chip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+
+/* The corner build badge: a version chip in the top-right cluster that opens a
+   small panel with this build's commit (linked) and a link to its release
+   notes. Informational chrome, kept as quiet as the toggles beside it. */
+.version-badge {
+  position: relative;
+  display: flex;
+}
+.version-badge__panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 60;
+  display: grid;
+  gap: var(--space-3);
+  min-width: 12rem;
+  padding: var(--space-4);
+  font-family: var(--font-ui);
+  background: color-mix(in srgb, var(--deep) 92%, var(--abyss));
+  border: 1px solid color-mix(in srgb, var(--tide) 50%, transparent);
+  border-radius: 12px;
+}
+/* Guard: the author display:grid above would otherwise beat the UA [hidden]
+   rule at equal specificity, leaving the panel visible while closed. */
+.version-badge__panel[hidden] {
+  display: none;
+}
+.version-badge__commit {
+  font-size: 0.74rem;
+  line-height: 1.6;
+  color: var(--mist);
+}
+.version-badge__commit-label {
+  color: var(--moss);
+  letter-spacing: 0.08em;
+}
+.version-badge__sha {
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  color: var(--glow);
+}
+a.version-badge__sha {
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, var(--glow) 45%, transparent);
+  text-underline-offset: 3px;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+a.version-badge__sha:hover {
+  color: var(--lantern);
+}
+.version-badge__notes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  color: var(--moss);
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--moss) 34%, transparent);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-4);
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    border-color var(--dur-base) var(--ease-tide);
+}
+.version-badge__notes:hover {
+  color: var(--glow);
+  border-color: color-mix(in srgb, var(--lantern) 55%, transparent);
+}

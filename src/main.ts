@@ -34,6 +34,13 @@ import {
   nextLocale,
   onLocaleChange,
 } from "./i18n/i18n";
+import {
+  commitUrl,
+  isResolvedSha,
+  releaseUrl,
+  shortSha,
+  versionLabel,
+} from "./version/build-info";
 import type {
   MountedSpace,
   MountFn,
@@ -278,6 +285,86 @@ function createMotionToggle(): HTMLButtonElement {
   return btn;
 }
 
+/** A small, always-present build badge (top corner, beside the toggles). Shows
+ *  the version (v0.3.0); tap it to reveal this exact build — its commit, linked
+ *  to the commit on GitHub — and a link back to this version's release notes.
+ *  Purely informational: no preference, no state, just a thread back to where
+ *  this particular light was lit. */
+function createVersionBadge(): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "version-badge";
+
+  const chip = document.createElement("button");
+  chip.className = "version-badge__chip";
+  chip.type = "button";
+  chip.textContent = versionLabel();
+  chip.setAttribute("aria-expanded", "false");
+  chip.setAttribute("aria-controls", "lt-version-panel");
+
+  const panel = document.createElement("div");
+  panel.className = "version-badge__panel";
+  panel.id = "lt-version-panel";
+  panel.hidden = true;
+
+  // The commit line: a label, then the short SHA. Only a real resolved SHA links
+  // out to its commit page; a no-git dev build shows it as plain text.
+  const commit = document.createElement("p");
+  commit.className = "version-badge__commit";
+  const commitLabel = document.createElement("span");
+  commitLabel.className = "version-badge__commit-label";
+  const sha = isResolvedSha()
+    ? document.createElement("a")
+    : document.createElement("span");
+  sha.className = "version-badge__sha";
+  sha.textContent = shortSha();
+  if (sha instanceof HTMLAnchorElement) {
+    sha.href = commitUrl();
+    sha.target = "_blank";
+    sha.rel = "noopener noreferrer";
+  }
+  commit.append(commitLabel, document.createTextNode(" "), sha);
+
+  // The release-notes link, styled as a button: this version's GitHub Release.
+  const notes = document.createElement("a");
+  notes.className = "version-badge__notes";
+  notes.href = releaseUrl();
+  notes.target = "_blank";
+  notes.rel = "noopener noreferrer";
+
+  panel.append(commit, notes);
+  wrap.append(chip, panel);
+
+  let open = false;
+  const setOpen = (next: boolean): void => {
+    open = next;
+    panel.hidden = !next;
+    chip.setAttribute("aria-expanded", String(next));
+  };
+
+  const sync = (): void => {
+    const v = getMessages().version;
+    chip.setAttribute("aria-label", `${v.label} ${versionLabel()}`);
+    commitLabel.textContent = v.commit;
+    notes.textContent = v.notes;
+  };
+  sync();
+  onLocaleChange(sync);
+
+  chip.addEventListener("click", () => {
+    setOpen(!open);
+  });
+  // Dismiss when a click lands anywhere outside the badge.
+  document.addEventListener("click", (e) => {
+    if (e.target instanceof Node && !wrap.contains(e.target)) setOpen(false);
+  });
+  // Dismiss with Escape while open.
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && open) setOpen(false);
+  });
+
+  return wrap;
+}
+
 /** The in-space vibe-code declaration: a small button that opens a dismissible
  *  panel with the note and the source link. Shown only inside a space (CSS ties
  *  it to .stage--active); the front door shows the same note inline instead. */
@@ -377,8 +464,12 @@ function boot(): void {
   applyInitialLang();
   applyThresholdLocale();
   const controls = document.createElement("div");
-  controls.className = "controls"; // top-right cluster of global preference toggles
-  controls.append(createMotionToggle(), createLangToggle());
+  controls.className = "controls"; // top-right cluster of global chrome
+  controls.append(
+    createVersionBadge(),
+    createMotionToggle(),
+    createLangToggle(),
+  );
   document.body.appendChild(controls);
   document.body.appendChild(createColophonControl());
 

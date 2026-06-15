@@ -1,4 +1,34 @@
 import { defineConfig, type Plugin } from "vite";
+// Node built-ins, used only at config-eval time to stamp the build info below.
+// The repo ships no @types/node; the tiny slice we need is declared ambiently
+// in vite.config.node.d.ts. Vite evaluates this config in Node, where they live.
+import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+
+// ── Build stamp: the version + commit baked into the corner badge (read by
+// src/version/build-info.ts via `define`). Both are best-effort and read once
+// at config load: a checkout with no git history still builds (sha → unknown).
+function buildVersion(): string {
+  try {
+    const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
+      version?: string;
+    };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+function buildSha(): string {
+  try {
+    return execSync("git rev-parse HEAD", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+  } catch {
+    return "unknown";
+  }
+}
 
 // After the build, also write the entry HTML as 404.html. GitHub Pages has no
 // built-in SPA fallback, so it serves 404.html for unknown deep links; making
@@ -29,6 +59,12 @@ export default defineConfig(({ mode }) => ({
   // sets that base; dev, preview and the local build stay at root, so the e2e
   // suite and `pnpm preview` are unaffected.
   base: mode === "pages" ? "/lantern-tide/" : "/",
+  // Stamp the version + commit in for the corner badge. JSON.stringify so each
+  // lands in the bundle as a string literal (define is a raw text substitution).
+  define: {
+    __APP_VERSION__: JSON.stringify(buildVersion()),
+    __GIT_SHA__: JSON.stringify(buildSha()),
+  },
   plugins: [githubPagesSpaFallback()],
   server: {
     host: true,

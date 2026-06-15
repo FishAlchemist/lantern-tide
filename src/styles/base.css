@@ -1,0 +1,47 @@
+/* ════════════════════════════════════════════════════════════════
+   Base — reset, document defaults, focus ring, and the stage layer
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── reset / base — restrained, only as far as legibility ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html {
+  font-size: var(--text-base);
+}
+
+body {
+  min-height: 100dvh;
+  font-family: var(--font-body);
+  line-height: var(--leading);
+  color: var(--mist);
+  /* dark as ground (§7's deliberate gamble: dark as ground, warm light as figure) */
+  background: var(--abyss);
+  overflow: hidden; /* lock scroll during the entrance; spaces manage their own */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Accessibility: a visible, on-brand focus ring (§12) ──────────────
+   Keyboard users get a warm amber ring (the site's lantern colour) on every
+   interactive control. On the dark grounds amber reads clearly; the light
+   library page overrides it to ink, where amber would be too low in contrast.
+   :focus-visible (not :focus) so a pointer press never rings. The ring sits at
+   an offset, outside the control, so it stays legible even on amber buttons. */
+:focus-visible {
+  outline: 2px solid var(--lantern);
+  outline-offset: 3px;
+}
+
+/* stage: where the tunnel and spaces mount. Not present in the visual by default. */
+.stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+.stage--active {
+  pointer-events: auto;
+}

@@ -89,6 +89,16 @@ export interface Messages {
     /** Visible label when simple (calm) motion is active. */
     simple: string;
   };
+  /** The corner build badge: the version, and on tap, this build's commit and a
+   *  link back to its release notes. Purely informational. */
+  version: {
+    /** aria-label prefix for the chip (e.g. "Version" → "Version v0.3.0"). */
+    label: string;
+    /** Label preceding the commit SHA inside the panel. */
+    commit: string;
+    /** Text on the link to this version's release notes. */
+    notes: string;
+  };
   /** Shared navigation, reused by every shop. */
   nav: {
     backToStreet: string;

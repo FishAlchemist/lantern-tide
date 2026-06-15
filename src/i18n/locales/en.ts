@@ -33,6 +33,11 @@ const bundle: LocaleBundle = {
       detailed: "Detailed",
       simple: "Simple",
     },
+    version: {
+      label: "Version",
+      commit: "Commit",
+      notes: "Release notes",
+    },
     nav: {
       backToStreet: "← Back to the street",
       setOut: "Set out again",
