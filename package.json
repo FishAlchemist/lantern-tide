@@ -21,6 +21,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check:links": "node scripts/check-links.mjs",
+    "release": "node scripts/release.mjs",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run stylelint && pnpm run format:check && pnpm run test"
   },
   "devDependencies": {

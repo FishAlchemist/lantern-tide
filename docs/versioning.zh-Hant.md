@@ -29,4 +29,5 @@
 
 - 一個 `v*` tag 就是一次發佈的單位，以一個 GitHub Release 的形式發佈出去。發佈那個 Release，會觸發有關卡的部署（`.github/workflows/deploy.yml`）：測試關卡在被打 tag 的那個 commit 上跑，只有通過的 commit 才會發佈。
 - 綁在那個 tag 上的 GitHub Release 帶的是給人看的 notes；同一份文字也留在 [docs/releases/](./releases/)。
+- 用 `pnpm run release vX.Y.Z`（[scripts/release.mjs](../scripts/release.mjs)）切一個版本：它會從 `docs/releases/vX.Y.Z.md` 組出 Release —— 檔案的 `# H1` 當標題、其餘當內文，並把指向同層 `./…` 的相對連結改成絕對網址 —— 然後發佈，順勢觸發部署。（原始 `.md` 仍保留 H1 與相對連結，那在 repo 裡單獨閱讀才是對的。）
 - 一般推到 `main` 不會部署，只會跑 CI。光是一個 tag 也不會部署 —— 部署要等 Release 發佈。

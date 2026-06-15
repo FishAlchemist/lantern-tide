@@ -29,4 +29,5 @@ Once on date versions, this document will also carry a compatibility matrix — 
 
 - A `v*` tag is the unit of release, published as a GitHub Release. Publishing that Release triggers the gated deploy (`.github/workflows/deploy.yml`): the test gate runs on the tagged commit, and only a green commit is published.
 - The GitHub Release attached to that tag carries the human-facing notes; the same text is kept under [docs/releases/](./releases/).
+- Cut a release with `pnpm run release vX.Y.Z` ([scripts/release.mjs](../scripts/release.mjs)): it builds the Release from `docs/releases/vX.Y.Z.md` — the file's `# H1` becomes the title and the rest becomes the body, with sibling `./…` links absolutized — then publishes it, which kicks off the deploy. (The source `.md` keeps its H1 and relative links, which are correct for reading the file in the repo.)
 - Plain pushes to `main` never deploy; they only run CI. A tag on its own doesn't deploy either — the deploy waits for the Release.
