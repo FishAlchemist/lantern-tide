@@ -198,6 +198,36 @@
   background: color-mix(in srgb, var(--deep) 75%, transparent);
 }
 
+/* Click affordance: the chosen shop warms, with a soft amber halo breathing
+   around it while its room loads — so a cold first entry reads as "opening…"
+   rather than an unresponsive tap. Only the halo's opacity animates (§6); the
+   street fades out with it once the room is ready, so there's nothing to reset. */
+.space__nav-item--loading {
+  position: relative;
+  color: var(--glow);
+  border-color: var(--lantern);
+  background: color-mix(in srgb, var(--deep) 75%, transparent);
+}
+.space__nav-item--loading::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 1.4rem color-mix(in srgb, var(--lantern) 34%, transparent);
+  animation: nav-item-warm 1.5s var(--ease-tide) infinite;
+}
+
+@keyframes nav-item-warm {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Empty shopfront (not yet open): dashed, dim, not clickable. */
 .space__nav-item--empty {
   color: color-mix(in srgb, var(--mist) 42%, transparent);

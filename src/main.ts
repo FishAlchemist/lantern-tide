@@ -46,7 +46,7 @@ import type {
   MountFn,
   SpaceContext,
 } from "./spaces/_shared/space-shell";
-import { loadSpace } from "./spaces/registry";
+import { loadSpace, prefetchSpaces } from "./spaces/registry";
 
 // Each space is its own chunk, import()-ed only after the entrance sequence is
 // complete — loading is split, and a cold load stops at the front door without
@@ -193,6 +193,9 @@ function mountInto(
   };
   active = mount(stage, ctx);
   activeNs = namespace;
+  // Now that we're inside, warm the other shops' chunks on idle so stepping
+  // into one is instant (the cold front door still prefetches nothing — §10).
+  prefetchSpaces();
   if (instant) {
     // dispose() hid the old root (removed .space--visible); remove it now,
     // leaving just the new (visible) root, then restore fades next frame.

@@ -106,9 +106,16 @@ export async function walkTunnel(
       ? delay(duration)
       : runWalkAnimation(light, opts.variant, duration);
 
-  // §3: out of the tunnel ≈ loading complete. Both animation and assets must
-  // be satisfied.
-  await Promise.all([animation, opts.preload ?? Promise.resolve()]);
+  // §3: out of the tunnel ≈ loading complete. The walk plays for its full
+  // duration; if the assets are slower than that (a cold load on a slow line),
+  // keep the orb gently breathing rather than frozen on its last frame, until
+  // they land. On a fast load the add+remove both flush as microtasks before
+  // the next paint, so there's no flash; a rejected preload still throws out to
+  // enterSpace, exactly as before.
+  await animation;
+  light.classList.add("tunnel__light--waiting");
+  await (opts.preload ?? Promise.resolve());
+  light.classList.remove("tunnel__light--waiting");
 
   return async (): Promise<void> => {
     root.classList.remove("tunnel--visible");

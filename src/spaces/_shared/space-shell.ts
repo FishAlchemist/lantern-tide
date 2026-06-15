@@ -77,6 +77,11 @@ export function mountShell(
       btn.classList.add("space__nav-item--empty");
     } else {
       btn.addEventListener("click", () => {
+        // Acknowledge the tap at once: the chosen shop warms while its room
+        // loads. No cleanup needed — the street fades out with it once the room
+        // is ready (so even a cold first entry never reads as an unresponsive tap).
+        btn.classList.add("space__nav-item--loading");
+        btn.setAttribute("aria-busy", "true");
         ctx.goTo(target);
       });
     }

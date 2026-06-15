@@ -21,6 +21,7 @@
    ════════════════════════════════════════════════════════════════ */
 
 import type { MountFn } from "./_shared/space-shell";
+import { onIdle } from "../util/timing";
 
 interface SpaceModule {
   default: MountFn;
@@ -52,4 +53,22 @@ export function loadSpace(
   namespace: string,
 ): (() => Promise<SpaceModule>) | undefined {
   return loaders.get(namespace);
+}
+
+let sweepStarted = false;
+
+/** Warm every space chunk (and its co-located CSS) on idle, so stepping into a
+ *  shop is instant instead of paying a cold fetch on the click. Lazy by default
+ *  (§10: the cold front door still fetches nothing) — call this only once you're
+ *  already inside. import() dedupes, so re-warming a loaded chunk is free; the
+ *  guard just keeps the sweep from being scheduled more than once a session. */
+export function prefetchSpaces(): void {
+  if (sweepStarted) return;
+  sweepStarted = true;
+  onIdle(() => {
+    for (const loader of loaders.values()) {
+      // A prefetch failure is harmless: the real entry will load and report it.
+      void loader().catch(() => undefined);
+    }
+  });
 }

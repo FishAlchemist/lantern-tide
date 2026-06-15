@@ -5,3 +5,16 @@ export function delay(ms: number): Promise<void> {
     setTimeout(resolve, ms);
   });
 }
+
+/** Run `cb` when the main thread is next idle, so background work (warming the
+ *  shop chunks) never competes with the current render. Falls back to a short
+ *  timer where requestIdleCallback isn't available (older Safari). */
+export function onIdle(cb: () => void): void {
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(() => {
+      cb();
+    });
+  } else {
+    setTimeout(cb, 200);
+  }
+}

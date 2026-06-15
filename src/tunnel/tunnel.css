@@ -51,6 +51,24 @@
   will-change: transform, opacity;
 }
 
+/* If the assets outlast the walk, the orb breathes gently while you wait — a
+   slow cold load reads as "still arriving", not a frozen frame. Only opacity
+   animates (§6), over the orb's final inline scale. The walk plays only under
+   chosen full motion, so this never fights the reduced-motion stilling. */
+.tunnel__light--waiting {
+  animation: tunnel-wait-breath 1.8s var(--ease-tide) infinite;
+}
+
+@keyframes tunnel-wait-breath {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
 /* §12: on skip/reduced, main doesn't walk the tunnel anyway; as a safety net
    here — if it is reached, don't run the scale-up, just let the light be (the
    instant flow in main passes through quickly). */

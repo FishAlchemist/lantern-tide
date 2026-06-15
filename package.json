@@ -1,6 +1,6 @@
 {
   "name": "lantern-tide",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Lantern Tide — A silent observer of the shifting tides. Static-first frontend skeleton.",
   "type": "module",
   "private": true,

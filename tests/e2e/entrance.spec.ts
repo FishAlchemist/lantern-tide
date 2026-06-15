@@ -774,3 +774,49 @@ test("version badge: a corner chip shows the build version; tap it for the commi
   await expect(panel).toBeHidden();
   await expect(chip).toHaveAttribute("aria-expanded", "false");
 });
+
+test("performance: stepping onto the street warms the shop chunks on idle, so entering a shop doesn't pay a cold fetch", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("#skip").click(); // land straight on the street
+  await expect(page.locator(".space--street.space--visible")).toBeVisible({
+    timeout: 6_000,
+  });
+
+  // No shop has been visited, yet after idle a shop's chunk has already been
+  // fetched — so a later tap loads from cache instead of over the cold network.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() =>
+          performance
+            .getEntriesByType("resource")
+            .some((r) => /stillroom\.space.*\.js/.test(r.name)),
+        ),
+      { timeout: 8_000 },
+    )
+    .toBe(true);
+});
+
+test("street: tapping a shop lights it up while its room loads (a loading affordance, not a dead tap)", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("#skip").click();
+  await expect(page.locator(".space--street.space--visible")).toBeVisible({
+    timeout: 6_000,
+  });
+
+  // Tap the stillroom (5th storefront: library, café, lookout, paper-boat,
+  // stillroom). The tapped item warms at once — the feedback that it's opening.
+  const item = page.locator(".space--street .space__nav-item").nth(4);
+  await item.click();
+  await expect(item).toHaveClass(/space__nav-item--loading/);
+  await expect(item).toHaveAttribute("aria-busy", "true");
+
+  // And the room does open.
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 6_000,
+  });
+});
