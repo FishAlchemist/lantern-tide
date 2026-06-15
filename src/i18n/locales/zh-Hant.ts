@@ -24,6 +24,11 @@ const bundle: LocaleBundle = {
       show: "關於這座島",
       close: "關閉",
     },
+    motion: {
+      toggle: "詳細動畫",
+      detailed: "詳細",
+      simple: "簡約",
+    },
     nav: {
       backToStreet: "← 回到街上",
       setOut: "再出發,回到潮裡",
@@ -37,6 +42,7 @@ const bundle: LocaleBundle = {
       cafe: "咖啡廳 · 來坐、來想",
       lookout: "觀星臺 · 來望、來定向",
       paperboat: "紙船舖 · 來摺、來放下",
+      stillroom: "煉光舖 · 來煉、來歇",
     },
     lookout: {
       ariaLabel: "觀星臺",
@@ -400,6 +406,37 @@ const bundle: LocaleBundle = {
           author: "丁尼生〈尤利西斯〉",
         },
       ],
+    },
+    stillroom: {
+      ariaLabel: "煉光舖",
+      label: "煉光舖 · 來煉、來歇",
+      lore: "把深海的重量,煉成一抹光。坐下,跟著爐火,一起呼吸就好。",
+      phases: {
+        inhale: { word: "吸", cue: "把深海,緩緩吸進來" },
+        hold: { word: "屏", cue: "停在這裡,一下下" },
+        exhale: { word: "吐", cue: "煉成微光,慢慢吐出去" },
+        rest: { word: "歇", cue: "空一拍,什麼都不必做" },
+      },
+      keeper: "(守爐的人添了一塊柴,火光溫溫地亮著,等你喘口氣。)",
+      safety: "覺得不舒服或頭暈,就停下來,慢慢正常呼吸就好。",
+      notice:
+        "煉光舖只是個讓心情放鬆的地方,不是專業的醫療場所;身體若有任何不適,請以自己的狀況為準,需要時尋求專業的醫療協助。",
+      reset: "回到原本的節奏",
+      settle: {
+        hint: "跟著爐火呼吸就好。它會慢慢帶你放慢,覺得這樣剛好,就留在這個節奏。",
+        stay: "就留在這個節奏",
+      },
+      paces: {
+        open: "換一種節奏",
+        label: "挑一個呼吸的節奏",
+        names: {
+          gentle: "微光",
+          coherent: "平潮",
+          calm: "沉靜",
+          box: "凝光",
+          deep: "深潛",
+        },
+      },
     },
     library: {
       ariaLabel: "圖書館",

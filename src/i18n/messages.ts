@@ -30,6 +30,23 @@ export interface CafePrompt {
   author: string;
 }
 
+/** The four beats of one breath at the stillroom, in order. Stable, locale-
+ *  independent keys so the breathing guide can drive the scene regardless of
+ *  the displayed language. */
+export type BreathPhase = "inhale" | "hold" | "exhale" | "rest";
+
+export interface BreathBeat {
+  /** The large phase glyph shown in the breathing circle (吸 / In…). */
+  word: string;
+  /** The quiet cue beneath it. */
+  cue: string;
+}
+
+/** Stable, locale-independent keys for the small menu of named paces — a light,
+ *  quick breath through to a slow, deep one. The lead is still the default; this
+ *  is just a shortcut for someone who knows the pace they want. */
+export type PaceId = "gentle" | "coherent" | "calm" | "box" | "deep";
+
 export interface LibraryEntry {
   title: string;
   author: string;
@@ -63,6 +80,15 @@ export interface Messages {
     /** Dismiss label for the revealed panel. */
     close: string;
   };
+  /** The page-wide motion toggle (detailed ⇄ simple), a remembered choice. */
+  motion: {
+    /** Stable aria-label naming the control. */
+    toggle: string;
+    /** Visible label when detailed (full) motion is active. */
+    detailed: string;
+    /** Visible label when simple (calm) motion is active. */
+    simple: string;
+  };
   /** Shared navigation, reused by every shop. */
   nav: {
     backToStreet: string;
@@ -77,6 +103,7 @@ export interface Messages {
     cafe: string;
     lookout: string;
     paperboat: string;
+    stillroom: string;
   };
   lookout: {
     ariaLabel: string;
@@ -104,6 +131,42 @@ export interface Messages {
     label: string;
     next: string;
     prompts: readonly CafePrompt[];
+  };
+  stillroom: {
+    ariaLabel: string;
+    label: string;
+    /** A quiet line under the label: what this place is, what to do. */
+    lore: string;
+    /** The four breath beats, keyed so the guide stays language-agnostic. */
+    phases: Record<BreathPhase, BreathBeat>;
+    /** The stillroom-keeper's small companion line (a warm character touch). */
+    keeper: string;
+    /** A gentle comfort note (not medical advice): stop if it feels off. */
+    safety: string;
+    /** A standing disclaimer, kept plainly legible (not faint fine print):
+     *  this is a place to ease the mind, not medical care — if unwell, judge
+     *  by your own state and seek professional help. */
+    notice: string;
+    /** Forget the settled pace, back to being led from the start. */
+    reset: string;
+    /** The gentle "I'll lead you slower; stay wherever it suits you" pacing —
+     *  it leads, you follow, never a test or a setup chore. */
+    settle: {
+      /** A one-line whisper that the fire is easing the pace and you can stay. */
+      hint: string;
+      /** Label on the "keep this pace" button. */
+      stay: string;
+    };
+    /** The optional little menu of named paces, sitting quietly alongside the
+     *  lead (you can also just be led and settle). */
+    paces: {
+      /** The quiet link that opens the menu (e.g. "換一種節奏"). */
+      open: string;
+      /** A short heading / the menu group's aria-label. */
+      label: string;
+      /** A warm name per pace — kept in the room's voice, not breathing jargon. */
+      names: Record<PaceId, string>;
+    };
   };
   library: {
     ariaLabel: string;

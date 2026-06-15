@@ -21,6 +21,12 @@
 .space--visible {
   opacity: 1;
 }
+/* The motion toggle re-mounts the space in place: swap with no cross-fade (only
+   the content's motion is changing). !important wins over the reduced-motion
+   blanket's forced transition-duration so the swap is truly instant either way. */
+.stage--instant .space {
+  transition: none !important;
+}
 
 /* §7 texture: a very fine, static grain over every scene (a "fine mist / depth"
    layer) so the deep never reads as dead-black. Sits above the scene art (z:-1)

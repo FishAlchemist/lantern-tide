@@ -8,7 +8,14 @@ import { SPACE_NAMESPACES, loadSpace } from "./registry";
    subset checks, so adding a new space never breaks them. */
 describe("space registry (auto-discovery from the folder layout)", () => {
   it("discovers each space's .space.ts entry as a namespace", () => {
-    for (const ns of ["street", "library", "cafe", "lookout", "paperboat"]) {
+    for (const ns of [
+      "street",
+      "library",
+      "cafe",
+      "lookout",
+      "paperboat",
+      "stillroom",
+    ]) {
       expect(SPACE_NAMESPACES).toContain(ns);
     }
   });

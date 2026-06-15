@@ -385,6 +385,328 @@ test("lookout: the legend advances by keyboard, not only by pointer (§12 a11y)"
   await expect(story).not.toHaveText(firstBeat, { timeout: 3_000 });
 });
 
+test("stillroom: the breathing guide cycles through its beats (deep link, full motion)", async ({
+  page,
+}) => {
+  // Deep link straight into the stillroom. No front-door ceremony and no system
+  // reduce-motion → the breath auto-cycles.
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  // The phase glyph advances on a timer (in → hold → out → rest), which is the
+  // proof the breath is running. It changes within one in-breath (~4s).
+  const word = page.locator(".stillroom__word");
+  const first = (await word.textContent()) ?? "";
+  expect(first.length).toBeGreaterThan(0);
+  await expect(word).not.toHaveText(first, { timeout: 8_000 });
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: "tests/e2e/__shots__/07-stillroom.png" });
+});
+
+test("stillroom reduced motion: the breath still plays, gently — a small swell, no streaking motes (§12 exception)", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  // §12 exception: the breath is this room's whole point and is gentle, so it
+  // still runs under reduced motion — the phase glyph advances (it doesn't freeze).
+  const word = page.locator(".stillroom__word");
+  const first = (await word.textContent()) ?? "";
+  expect(first.length).toBeGreaterThan(0);
+  await expect(word).not.toHaveText(first, { timeout: 8_000 });
+
+  // ...but the swell stays small — nowhere near the full open size (1.34). Sample
+  // the circle's scale across a breath; it breathes, but only a gentle pulse.
+  let maxScale = 1;
+  for (let i = 0; i < 14; i++) {
+    const s = await page.locator(".stillroom__breath").evaluate((el) => {
+      const matrix = getComputedStyle(el).transform;
+      const nums = /matrix\(([^)]+)\)/.exec(matrix);
+      return nums ? parseFloat(nums[1].split(",")[0]) : 1;
+    });
+    maxScale = Math.max(maxScale, s);
+    await page.waitForTimeout(500);
+  }
+  expect(maxScale).toBeGreaterThan(1.01); // it does breathe
+  expect(maxScale).toBeLessThan(1.15); // but gently — far from the full 1.34 swell
+
+  // The draw-in (streaking motes) is the vection-y motion, so under reduced
+  // motion none fly (the loop above already spanned an in-breath). The gentle
+  // pace-easing carries no extra motion, so it still leads you either way.
+  await expect(page.locator(".stillroom__meteor")).toHaveCount(0);
+});
+
+test("stillroom: on the in-breath, motes of the deep streak up to the ring and vanish on contact (full motion)", async ({
+  page,
+}) => {
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  // The cue's "draw the deep in" now has a visual: on the in-breath a stream of
+  // motes rises from the water and streaks up toward the ring.
+  await expect
+    .poll(() => page.locator(".stillroom__meteor").count(), { timeout: 8_000 })
+    .toBeGreaterThan(0);
+  await page.waitForTimeout(700);
+  await page.screenshot({
+    path: "tests/e2e/__shots__/07b-stillroom-drawin.png",
+  });
+
+  // They reach the ring's edge and simply vanish — no little burst is left
+  // behind (the absorb "flash" was removed).
+  await expect(page.locator(".stillroom__flash")).toHaveCount(0);
+});
+
+test("stillroom: motes draw in on every in-breath — even with the lamp already full", async ({
+  page,
+}) => {
+  // A full lamp must NOT stop the draw-in: the motes are the in-breath itself,
+  // not a one-time fill. Regression — they used to stop once the furnace filled,
+  // so the second in-breath onward had none.
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "lt.light",
+      JSON.stringify({ v: 1, charge: 1, at: Date.now() }),
+    );
+  });
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  const motes = page.locator(".stillroom__meteor");
+  // First in-breath: motes draw in...
+  await expect.poll(() => motes.count(), { timeout: 8_000 }).toBeGreaterThan(0);
+  // ...they clear as the breath moves to hold / out / rest...
+  await expect.poll(() => motes.count(), { timeout: 8_000 }).toBe(0);
+  // ...and the NEXT in-breath draws in again (every in-breath, not just the first).
+  await expect
+    .poll(() => motes.count(), { timeout: 13_000 })
+    .toBeGreaterThan(0);
+});
+
+test("stillroom: the motes draw in only on the in-breath — never in the other phases", async ({
+  page,
+}) => {
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  // The breath starts on the in-breath, so the first glyph is the in-breath's.
+  const word = page.locator(".stillroom__word");
+  const inhaleGlyph = (await word.textContent()) ?? "";
+  expect(inhaleGlyph.length).toBeGreaterThan(0);
+
+  // Sample across more than a whole cycle (in → hold → out → rest): whenever a
+  // mote is in flight, the phase must be the in-breath. The stream is timed to
+  // finish within it, so nothing bleeds into the other phases.
+  let sawMoteOnInhale = false;
+  let violations = 0;
+  for (let i = 0; i < 120; i++) {
+    const w = (await word.textContent()) ?? "";
+    const motes = await page.locator(".stillroom__meteor").count();
+    if (motes > 0) {
+      if (w === inhaleGlyph) sawMoteOnInhale = true;
+      else violations += 1;
+    }
+    await page.waitForTimeout(120);
+  }
+  expect(violations).toBe(0); // never drawn in outside the in-breath
+  expect(sawMoteOnInhale).toBe(true); // but they do draw in on it
+});
+
+test("stillroom: it leads you slower; you can settle on a pace (no press-and-hold, no test)", async ({
+  page,
+}) => {
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  // A fresh visit: it's leading you slower, so the gentle "keep this pace"
+  // affordance is offered — and nothing's settled yet, so no reset. (No
+  // press-and-hold target, no progress dots: you just follow.)
+  const stay = page.locator(".stillroom__settle-btn");
+  await expect(stay).toBeVisible();
+  await expect(page.locator(".stillroom__settle-hint")).not.toBeEmpty();
+  await expect(page.locator(".stillroom__press")).toHaveCount(0);
+  await expect(page.locator(".stillroom__dot")).toHaveCount(0);
+  await expect(page.locator(".stillroom__reset")).toHaveCount(0);
+
+  // Tap "keep this pace" → it settles: the affordance goes away, the reset
+  // (forget this pace) appears, and the pace is saved.
+  await stay.click();
+  await expect(page.locator(".stillroom__settle-btn")).toHaveCount(0);
+  await expect(page.locator(".stillroom__reset")).toBeVisible();
+});
+
+test("stillroom: a settled pace is pre-read on load and leads at that pace (reset, not settle)", async ({
+  page,
+}) => {
+  // No settled pace → it's leading you slower: the "keep this pace" affordance is
+  // shown and there's no reset.
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator(".stillroom__settle-btn")).toBeVisible();
+  await expect(page.locator(".stillroom__reset")).toHaveCount(0);
+
+  // Seed a settled pace; on the next load it's pre-read (loadRhythm), so it leads
+  // at that pace — the reset shows and the "settle" affordance does not (the UI
+  // switches on the stored pace).
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "lt.breath",
+      JSON.stringify({ v: 1, inhale: 3, hold: 0, exhale: 4.2, rest: 1 }),
+    );
+  });
+  await page.reload();
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator(".stillroom__reset")).toBeVisible();
+  await expect(page.locator(".stillroom__settle-btn")).toHaveCount(0);
+
+  // Pressing reset forgets the pace; it leads from the start again (reset gone,
+  // the "keep this pace" affordance returns).
+  await page.locator(".stillroom__reset").click();
+  await expect(page.locator(".stillroom__reset")).toHaveCount(0);
+  await expect(page.locator(".stillroom__settle-btn")).toBeVisible();
+});
+
+test("stillroom: an optional pace menu sits beside the lead — open it, pick one, and it's kept and lit (lead stays the default)", async ({
+  page,
+}) => {
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  // The lead is still the default path: it's leading you slower (settle shown),
+  // nothing settled yet (no reset). The menu is purely an optional shortcut.
+  await expect(page.locator(".stillroom__settle-btn")).toBeVisible();
+  await expect(page.locator(".stillroom__reset")).toHaveCount(0);
+
+  // A quiet link offers the named paces, collapsed until opened (no setup gate):
+  // the five pace buttons exist in the DOM but stay hidden.
+  const toggle = page.locator(".stillroom__paces-toggle");
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator(".stillroom__pace")).toHaveCount(5);
+  await expect(page.locator(".stillroom__pace").first()).toBeHidden();
+
+  // Open it → the five paces are revealed.
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator(".stillroom__pace").first()).toBeVisible();
+
+  // Pick the slow "deep" pace → it's kept: the menu collapses, the lead's settle
+  // affordance gives way to the reset, the chosen pace is saved and lit.
+  const deep = page.locator('.stillroom__pace[data-pace="deep"]');
+  await deep.click();
+  await expect(page.locator(".stillroom__settle-btn")).toHaveCount(0);
+  await expect(page.locator(".stillroom__reset")).toBeVisible();
+  await expect(deep).toHaveClass(/stillroom__pace--on/);
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  const saved = await page.evaluate(() => localStorage.getItem("lt.breath"));
+  expect(saved).toContain('"exhale":8'); // the deep pace's long out-breath, persisted
+});
+
+test("stillroom: switching pace hands over cleanly — back to rest, a held pause, then the new in-breath", async ({
+  page,
+}) => {
+  // Seed a no-rest rhythm so the breath never sits at the empty "rest" beat: the
+  // pick then always lands on an active beat, giving the full contraction + hold
+  // deterministically (the mid-rest, capped case is covered by the unit tests).
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "lt.breath",
+      JSON.stringify({ v: 1, inhale: 6, hold: 0, exhale: 6, rest: 0 }),
+    );
+  });
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  const word = page.locator(".stillroom__word");
+  const breath = page.locator(".stillroom__breath");
+  const scale = () =>
+    breath.evaluate((el) => {
+      const m = /matrix\(([^)]+)\)/.exec(getComputedStyle(el).transform);
+      return m ? parseFloat(m[1].split(",")[0]) : 1;
+    });
+
+  // Pick the slow "deep" pace.
+  await page.locator(".stillroom__paces-toggle").click();
+  await page.locator('.stillroom__pace[data-pace="deep"]').click();
+
+  // Stage 1 — the ring contracts fluidly to its smallest (rest): by ~1.3s the
+  // shrink has finished and it sits at rest, not lurching into the new in-breath.
+  await page.waitForTimeout(1300);
+  const held = (await word.textContent()) ?? "";
+  expect(held.length).toBeGreaterThan(0);
+  expect(await scale()).toBeLessThan(1.05); // shrunk to its smallest
+
+  // Stage 2 — it holds there on the same (rest) beat for a few seconds: at ~3.5s
+  // (within the ~3s hold) it's still the same glyph, still at rest.
+  await page.waitForTimeout(2200);
+  expect(await word.textContent()).toBe(held);
+  expect(await scale()).toBeLessThan(1.05);
+
+  // Stage 3 — only then does the new pace begin on a fresh in-breath: the beat
+  // changes and the circle swells past rest.
+  await expect(word).not.toHaveText(held, { timeout: 4_000 });
+  await expect.poll(() => scale(), { timeout: 5_000 }).toBeGreaterThan(1.1);
+});
+
+test("motion toggle: flips detailed ⇄ simple live, and is remembered across reloads (§12)", async ({
+  page,
+}) => {
+  await page.goto("/street/stillroom");
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+
+  // Default (no system reduce, no choice) → detailed: a warm, pressed chip, and
+  // the full-motion draw-in motes stream on the in-breath.
+  const toggle = page.locator(".motion-toggle");
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect
+    .poll(() => page.locator(".stillroom__meteor").count(), { timeout: 8_000 })
+    .toBeGreaterThan(0);
+
+  // Flip to simple → the space re-mounts at the calmer level: no streaking motes
+  // any more (proof the new setting applied live to the space, not just the chip).
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await page.waitForTimeout(5_000); // span an in-breath
+  await expect(page.locator(".stillroom__meteor")).toHaveCount(0);
+
+  // The choice is remembered after a reload (deep links don't reset it).
+  await page.reload();
+  await expect(page.locator(".space--stillroom.space--visible")).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator(".motion-toggle")).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await page.waitForTimeout(5_000); // span an in-breath
+  await expect(page.locator(".stillroom__meteor")).toHaveCount(0);
+});
+
 test("declaration: written out on the front door, behind a button in every space (§7)", async ({
   page,
 }) => {

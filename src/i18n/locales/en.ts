@@ -28,6 +28,11 @@ const bundle: LocaleBundle = {
       show: "About this island",
       close: "Close",
     },
+    motion: {
+      toggle: "Detailed motion",
+      detailed: "Detailed",
+      simple: "Simple",
+    },
     nav: {
       backToStreet: "← Back to the street",
       setOut: "Set out again",
@@ -41,6 +46,7 @@ const bundle: LocaleBundle = {
       cafe: "Café · Sit a while, think",
       lookout: "Lookout · Gaze, find your bearings",
       paperboat: "Paper-Boat Shop · Fold one, let it go",
+      stillroom: "Stillroom · Breathe, and settle",
     },
     lookout: {
       ariaLabel: "The Lookout",
@@ -490,6 +496,39 @@ const bundle: LocaleBundle = {
           author: "Tennyson, 'Ulysses'",
         },
       ],
+    },
+    stillroom: {
+      ariaLabel: "The Stillroom",
+      label: "Stillroom · Breathe, and settle",
+      lore: "Distil the weight of the deep into a flicker of light. Sit down, and just breathe with the fire.",
+      phases: {
+        inhale: { word: "In", cue: "Draw the deep slowly in" },
+        hold: { word: "Hold", cue: "Stay here, just a beat" },
+        exhale: { word: "Out", cue: "Let it out as light, slowly" },
+        rest: { word: "Rest", cue: "An empty beat — nothing to do" },
+      },
+      keeper:
+        "(The stillroom-keeper lays on another log; the fire glows softly, waiting while you catch your breath.)",
+      safety:
+        "If anything feels off, or you get lightheaded, just stop and breathe normally.",
+      notice:
+        "The stillroom is a place to ease your mind, not professional medical care. If your body feels unwell, judge by your own condition and seek professional medical help when you need it.",
+      reset: "Back to the usual pace",
+      settle: {
+        hint: "Just breathe with the fire. It will ease you slower — when it feels right, stay at this pace.",
+        stay: "Keep this pace",
+      },
+      paces: {
+        open: "Try another pace",
+        label: "Pick a breathing pace",
+        names: {
+          gentle: "Gentle",
+          coherent: "Even",
+          calm: "Calm",
+          box: "Held",
+          deep: "Deep",
+        },
+      },
     },
     library: {
       ariaLabel: "Library",

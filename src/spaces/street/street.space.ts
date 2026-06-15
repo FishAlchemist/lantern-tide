@@ -21,7 +21,7 @@ export default function mountStreet(stage: HTMLElement, ctx: SpaceContext) {
       { label: m.cafe, to: "cafe" },
       { label: m.lookout, to: "lookout" },
       { label: m.paperboat, to: "paperboat" },
-      { label: m.empty, to: null },
+      { label: m.stillroom, to: "stillroom" },
       { label: m.empty, to: null },
       { label: m.empty, to: null },
     ],

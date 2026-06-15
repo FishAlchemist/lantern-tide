@@ -16,7 +16,13 @@ import {
   syncFrontDoor,
   type Namespace,
 } from "./router/router";
-import { decideEntrance, markEntered } from "./state/session";
+import {
+  applyStoredMotion,
+  decideEntrance,
+  markEntered,
+  prefersReducedMotion,
+  setMotionPref,
+} from "./state/session";
 import { applyPlatformChrome } from "./platform/adapter";
 import { forceReflow } from "./util/dom";
 import { launchBoat } from "./boat/boat";
@@ -99,12 +105,12 @@ async function enterSpace(
       return;
     }
 
-    // Pressing "Enter" = this session actively chose full motion: even with the
-    // system "reduce motion" on, the ritual (tunnel, boat) and the later in-space
-    // motion still plays — an explicit human gesture takes precedence. Flagged on
-    // <html> so style.css's global suppression and session.ts's
-    // prefersReducedMotion() both stand down; anyone who wants calm uses "Skip".
-    document.documentElement.dataset["motion"] = "full";
+    // Pressing "Enter" = an explicit opt into the full experience: remember
+    // "detailed" (flags <html data-motion="full">) so the ritual (tunnel, boat)
+    // and the later in-space motion play, even with the system "reduce motion"
+    // on — an explicit human choice wins, and it sticks across reloads. The
+    // motion toggle can change it later; "Skip" leaves the choice untouched.
+    setMotionPref("full");
 
     // Otherwise the full ritual: a little paper boat forms at centre (the front
     // door's text dissolving into a boat), carrying the wanderer through the
@@ -148,20 +154,29 @@ async function enterSpace(
 }
 
 /** Switch spaces within a session (§2 spatial continuity: smooth transition,
- *  no reload, no second walk through the tunnel). */
-function switchSpace(namespace: Namespace): void {
+ *  no reload, no second walk through the tunnel). `instant` swaps in place with
+ *  no cross-fade — used by the motion toggle, where only the motion changes. */
+function switchSpace(namespace: Namespace, instant = false): void {
   // Already inside the session → no tunnel needed, just cross-fade.
   const loader = loadSpace(namespace) ?? loadSpace(DEFAULT_NAMESPACE);
   loader?.()
     .then((mod) => {
-      mountInto(mod.default, namespace);
+      mountInto(mod.default, namespace, instant);
     })
     .catch((err: unknown) => {
       console.error("Space failed to load", err);
     });
 }
 
-function mountInto(mount: MountFn, namespace: Namespace): void {
+function mountInto(
+  mount: MountFn,
+  namespace: Namespace,
+  instant = false,
+): void {
+  // Instant re-mount (the motion toggle): turn the .space fade off, and drop the
+  // outgoing root at once instead of waiting out its 800ms fade timer — so the
+  // change reads as immediate, not a flicker or a double cross-fade.
+  if (instant) stage.classList.add("stage--instant");
   active?.dispose();
   const ctx: SpaceContext = {
     goTo: (ns) => {
@@ -171,6 +186,16 @@ function mountInto(mount: MountFn, namespace: Namespace): void {
   };
   active = mount(stage, ctx);
   activeNs = namespace;
+  if (instant) {
+    // dispose() hid the old root (removed .space--visible); remove it now,
+    // leaving just the new (visible) root, then restore fades next frame.
+    stage.querySelectorAll(".space:not(.space--visible)").forEach((el) => {
+      el.remove();
+    });
+    requestAnimationFrame(() => {
+      stage.classList.remove("stage--instant");
+    });
+  }
 }
 
 /** §3 the loop: set out again, back into the tide. Return to the front door
@@ -221,6 +246,33 @@ function createLangToggle(): HTMLButtonElement {
   sync();
   btn.addEventListener("click", () => {
     cycleLocale();
+  });
+  onLocaleChange(sync);
+  return btn;
+}
+
+/** A small, always-present motion toggle (top corner, beside the language one).
+ *  Flips the page-wide motion between detailed and simple, remembers it, and
+ *  re-mounts the current space so its motion re-evaluates live. The label shows
+ *  the current state; "on" (detailed) reads as a warm, filled chip. */
+function createMotionToggle(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.className = "motion-toggle";
+  btn.type = "button";
+  const sync = (): void => {
+    const detailed = !prefersReducedMotion();
+    const m = getMessages().motion;
+    btn.textContent = detailed ? m.detailed : m.simple;
+    btn.setAttribute("aria-pressed", String(detailed));
+    btn.setAttribute("aria-label", m.toggle);
+  };
+  sync();
+  btn.addEventListener("click", () => {
+    setMotionPref(prefersReducedMotion() ? "full" : "reduced");
+    sync();
+    // Re-mount the active space (instantly, no cross-fade) so its JS-driven
+    // motion (parallax, the breath's amplitude, the embers) re-evaluates at once.
+    if (active !== null && activeNs !== null) switchSpace(activeNs, true);
   });
   onLocaleChange(sync);
   return btn;
@@ -321,9 +373,13 @@ function createColophonControl(): HTMLElement {
    while inside a shop — lands directly in that space, so a refresh keeps you
    where you were instead of bouncing back to the front door. */
 function boot(): void {
+  applyStoredMotion(); // re-apply a remembered detailed/simple choice before anything renders
   applyInitialLang();
   applyThresholdLocale();
-  document.body.appendChild(createLangToggle());
+  const controls = document.createElement("div");
+  controls.className = "controls"; // top-right cluster of global preference toggles
+  controls.append(createMotionToggle(), createLangToggle());
+  document.body.appendChild(controls);
   document.body.appendChild(createColophonControl());
 
   // The front door's two gestures (§4: the click is the user gesture needed

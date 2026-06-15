@@ -1,0 +1,581 @@
+/* ════════════════════════════════════════════════════════════════
+   The stillroom (§1 distil the deep into light / §3 sit a while, rest)
+   ────────────────────────────────────────────────────────────────
+   The warmest room on the street (§7): a stillroom you breathe with. A soft
+   circle of warm light swells on the in-breath and settles on the out-breath,
+   and the room warms as you let it out — the weight of the deep, drawn in and
+   released as a flicker of steady light. On the in-breath, motes of the deep
+   rise from the water and are taken in at the ring's edge, feeding the swell.
+   The keeper tends the fire. The breathing circle and the light never drift
+   (§7); only the floor and the keeper take the parallax. Reduced motion: a
+   still fire and a self-paced text guide (§12).
+   ════════════════════════════════════════════════════════════════ */
+
+.stillroom__scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  /* the warmest ground (§7): more lantern mixed into the deep than the café */
+  background: radial-gradient(
+    130% 95% at 50% 58%,
+    color-mix(in srgb, var(--deep) 74%, var(--lantern) 14%) 0%,
+    var(--abyss) 74%
+  );
+}
+
+/* Parallax layers: offset = JS-set --par-x/--par-y × each layer's --depth.
+   Only touches transform (§6). */
+.stillroom__layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  transform: translate3d(
+    calc(var(--par-x, 0) * var(--depth, 0) * 1px),
+    calc(var(--par-y, 0) * var(--depth, 0) * 1px),
+    0
+  );
+}
+
+/* The deep, behind: a faint cold body low down — what the fire is distilled
+   from. Quiet and cool, so the warmth above reads as the figure. */
+.stillroom__deep {
+  background: radial-gradient(
+    80% 60% at 50% 94%,
+    color-mix(in srgb, var(--tide) 30%, transparent) 0%,
+    transparent 60%
+  );
+  opacity: 0.5;
+}
+
+/* The warm bloom: the room warming as you breathe out. opacity is driven per
+   breath-beat by JS (low on the in-breath, full on the out-breath), with the
+   beat-length transition set inline, so it blooms over the long exhale.
+   Centred on the breathing circle, it stays put — the light doesn't drift (§7). */
+.stillroom__warm {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  width: min(120vw, 52rem);
+  height: min(120vw, 52rem);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--lantern) 22%, transparent) 0%,
+    color-mix(in srgb, var(--lantern) 7%, transparent) 38%,
+    transparent 66%
+  );
+  opacity: 0.4;
+  transition: opacity 3s var(--ease-breath); /* matches the breath pacer's even curve */
+  pointer-events: none;
+}
+
+/* The stillroom floor: a dark ledge across the bottom, where the fire and the
+   keeper sit. */
+.stillroom__ground {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--deep) 80%, var(--abyss)) 0%,
+    color-mix(in srgb, var(--deep) 30%, transparent) 15%,
+    transparent 27%
+  );
+}
+
+/* The stillroom-keeper: a small seated silhouette by the warmth — someone tending
+   the light (§1), a quiet companion. Gently sways; stilled under reduced
+   motion. */
+.stillroom__keeper {
+  position: absolute;
+  bottom: 9%;
+  left: 3%;
+  width: 2rem;
+  height: 2.9rem;
+  background: color-mix(in srgb, var(--abyss) 82%, var(--ink));
+  /* a rounded seated body: broad at the base, narrowing to the shoulders */
+  border-radius: 46% 46% 36% 36% / 62% 62% 38% 38%;
+  transform-origin: 50% 100%;
+  animation: stillroom-sway 7s ease-in-out infinite;
+}
+.stillroom__keeper::before {
+  /* the head, settled into the shoulders */
+  content: "";
+  position: absolute;
+  top: -0.95rem;
+  left: 50%;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-left: -0.7rem;
+  border-radius: 50%;
+  background: inherit;
+}
+
+/* ── Content: the breathing guide ── */
+.stillroom__content {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  /* Wide enough to hold the breathing light at full swell without clipping it
+     to a square — on big screens it's the full 32rem, so the round glow has
+     room to breathe rather than being cropped by a narrow text column. The text
+     inside stays centred at its own readable widths. On a phone it's just the
+     viewport (minus the .space padding), i.e. the look it had before. */
+  width: min(32rem, calc(100dvw - 2 * var(--space-16)));
+  text-align: center;
+  /* Stay clear of the fixed nav: the column is capped to the band above it
+     (≈ top room + the nav's height and offset + a margin). When the copy is too
+     tall for that band (the longer English, short windows) it scrolls *inside*
+     this box rather than spilling onto the buttons — so the disclaimer is always
+     reachable and never lands on the nav. The scene and keeper fill the whole
+     viewport untouched (they're absolute, outside this box). */
+  max-height: calc(100dvh - 168px);
+  overflow: clip auto; /* y scrolls the rare overflow; x stays clear of the now-wide light */
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.stillroom__content::-webkit-scrollbar {
+  display: none;
+}
+.stillroom__label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+/* The breathing circle. A fixed-size box holds the scaling halo/ring and the
+   steady core; the glyph sits over the centre at a constant size. */
+.stillroom__guide {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* The 52vw term keeps the phone size as it was; the larger rem/vh caps let the
+     light grow on roomier screens (height-capped by 36vh, so on short windows it
+     shrinks instead of pushing the lines below it into the fixed nav). */
+  width: min(52vw, 16rem, 36vh);
+  height: min(52vw, 16rem, 36vh);
+  margin-block: var(--space-1);
+}
+
+/* The part that breathes: JS sets transform: scale() + the beat-length
+   transition on it. Swells on the in-breath, settles on the out-breath. */
+.stillroom__breath {
+  position: absolute;
+  inset: 0;
+  transform: scale(1);
+  /* The pacer the eye follows: a sine-like ease so the swell paces a slow, even
+     in-breath — gentle onset, no fast early pop that would cue rushing it (the
+     beat-length duration is set inline per phase by JS). */
+  transition: transform 4s var(--ease-breath);
+  will-change: transform;
+}
+.stillroom__halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--glow) 30%, transparent) 0%,
+    color-mix(in srgb, var(--lantern) 12%, transparent) 46%,
+    transparent 70%
+  );
+}
+.stillroom__ring {
+  position: absolute;
+  inset: 15%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--glow) 36%, transparent);
+}
+
+/* The steady core: the one light that does not scale with the breath (§7). It
+   holds the light you've distilled — JS drives its opacity and scale from the
+   stored charge, so it fills brighter as you breathe and arrives dimmed after
+   time away. The slow transition lets each out-breath's gain settle, not pop. */
+.stillroom__core {
+  position: absolute;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--glow) 28%, transparent) 0%,
+    color-mix(in srgb, var(--lantern) 20%, transparent) 40%,
+    transparent 72%
+  );
+  opacity: 0.3;
+  transition:
+    opacity 1.5s var(--ease-tide),
+    transform 1.5s var(--ease-tide);
+}
+
+/* ── The draw-in: motes of the deep rising into the furnace (§1) ──────────────
+   An overlay above the content (below the nav). On each in-breath JS spawns a
+   few motes near the waterline that streak up into the core; each one taken in
+   blooms a small ring of light. Transform/opacity only (§6); full motion only —
+   none are spawned under reduced motion (§12). */
+.stillroom__meteors {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* A mote is a zero-size anchor sitting at the moving head; its tail trails back
+   from the head (::before) and a bright head dot sits on it (::after). The whole
+   thing is rotated to its flight direction (--angle) and carried from the water
+   up to the furnace (--dx/--dy). */
+.stillroom__meteor {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: stillroom-meteor;
+  /* the same calm sine curve as the breath: gentle at each end, no fast launch —
+     an unhurried drift up that won't quicken the breathing tempo */
+  animation-timing-function: var(--ease-breath);
+  animation-fill-mode: forwards;
+}
+.stillroom__meteor::before {
+  content: "";
+  position: absolute;
+  right: 0; /* the head end rests on the anchor; the tail runs back to the left */
+  top: -1px;
+  width: 18px; /* a short streak with a bright head, not a long bar */
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--glow) 55%, transparent) 100%
+  );
+}
+.stillroom__meteor::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--glow);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--lantern) 70%, transparent);
+}
+
+/* The phase glyph, held centred and a constant size while the circle breathes
+   around it. A soft dark halo keeps it legible over the warm light. */
+.stillroom__word {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(1.5rem, 6vw, 2.2rem);
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  color: var(--glow);
+  text-shadow: 0 0 0.6rem color-mix(in srgb, var(--abyss) 70%, transparent);
+  pointer-events: none;
+}
+
+/* The cue beneath the circle. A reserved min-height so swapping cues of
+   different lengths doesn't shift the lines below (§2 no jank). */
+.stillroom__cue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.6em;
+  max-width: 24ch;
+  font-size: clamp(1rem, 3.4vw, 1.25rem);
+  font-style: italic;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--mist) 80%, var(--glow));
+}
+.stillroom__lore {
+  max-width: 26ch;
+  color: var(--mist);
+  opacity: 0.72;
+  font-style: italic;
+}
+.stillroom__aside {
+  max-width: 28ch;
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  line-height: 1.7;
+  color: var(--moss);
+}
+
+/* A gentle comfort note (not medical advice) — quiet, always present. */
+.stillroom__safety {
+  max-width: 30ch;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--moss) 85%, transparent);
+}
+
+/* A standing disclaimer — kept plainly legible (not faint), set apart by a
+   hairline so it isn't overlooked: a place to ease the mind, not medical care. */
+.stillroom__notice {
+  max-width: 32ch;
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid color-mix(in srgb, var(--moss) 32%, transparent);
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--mist) 88%, var(--glow));
+}
+
+/* ── Pace controls (it leads you slower; settle when it suits you) ──────────
+   While it's still easing you down: a quiet whisper and a "keep this pace"
+   button. Once settled: just the quiet reset. Both are unobtrusive — the breath
+   is the thing, not the controls. */
+.stillroom__settle {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  max-width: 30ch;
+}
+.stillroom__settle-hint {
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--moss) 88%, transparent);
+}
+.stillroom__settle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target */
+  padding: var(--space-2) var(--space-6);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: var(--mist);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--lantern) 40%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    border-color var(--dur-base) var(--ease-tide);
+}
+.stillroom__settle-btn:hover {
+  color: var(--glow);
+  border-color: var(--lantern);
+}
+.stillroom__reset {
+  min-height: 36px;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--moss);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.stillroom__reset:hover {
+  color: var(--mist);
+}
+
+/* ── The optional pace menu (a shortcut beside the lead, not a setup gate) ──────
+   A quiet link that opens a small row of named paces. Kept deliberately low-key:
+   the lead is the default path, this is just for someone who knows the pace they
+   want. The chosen pace stays lit. */
+.stillroom__paces {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+.stillroom__paces-toggle {
+  min-height: 36px;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--moss);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.stillroom__paces-toggle:hover {
+  color: var(--mist);
+}
+.stillroom__paces-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  max-width: 30ch;
+}
+/* Setting display above would otherwise beat the UA [hidden] rule (equal
+   specificity, author origin wins), so the collapsed menu would never hide —
+   restore it explicitly. */
+.stillroom__paces-list[hidden] {
+  display: none;
+}
+.stillroom__pace {
+  min-height: 40px;
+  padding: var(--space-1) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  color: var(--mist);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--moss) 42%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    color var(--dur-base) var(--ease-tide),
+    border-color var(--dur-base) var(--ease-tide),
+    background-color var(--dur-base) var(--ease-tide);
+}
+.stillroom__pace:hover {
+  color: var(--glow);
+  border-color: var(--lantern);
+}
+
+/* The pace you're breathing now: lit like the gathered light. */
+.stillroom__pace--on {
+  color: var(--glow);
+  border-color: var(--lantern);
+  background: color-mix(in srgb, var(--lantern) 14%, transparent);
+}
+
+/* ── Navigation ── */
+.stillroom__nav {
+  position: absolute; /* pinned to the viewport-sized space; the guide scrolls within its own box */
+  bottom: var(--space-6);
+  left: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-10);
+  width: 100%;
+}
+.stillroom__navlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target */
+  padding-inline: var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--moss);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-tide);
+}
+.stillroom__navlink:hover {
+  color: var(--mist);
+}
+
+/* English: tighten the uppercase label's tracking. */
+:lang(en) .stillroom__label {
+  letter-spacing: 0.14em;
+}
+
+@keyframes stillroom-sway {
+  0%,
+  100% {
+    transform: rotate(-1.2deg);
+  }
+
+  50% {
+    transform: rotate(1.2deg);
+  }
+}
+
+/* A mote's flight: held at its start (translate 0), carried to the ring's edge
+   (--dx/--dy), kept oriented along the way (--angle). Fades in as it leaves the
+   water, stays bright until it reaches the edge, then vanishes on contact. */
+@keyframes stillroom-meteor {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(var(--angle, 0deg));
+  }
+
+  12% {
+    opacity: 0.9;
+  }
+
+  94% {
+    opacity: 0.9; /* stays bright until it reaches the ring's edge */
+  }
+
+  100% {
+    opacity: 0; /* then simply vanishes on contact — no burst */
+    transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--angle, 0deg));
+  }
+}
+
+/* The English copy runs longer than the CJK, so except on tall screens the two
+   flavour lines would push the column into a scroll. Drop them earlier for
+   English (the breathing guide, the comfort note and the disclaimer all stay);
+   the CJK keeps its flavour until the shorter breakpoint below. */
+@media (height <= 1024px) {
+  :lang(en) .stillroom__lore,
+  :lang(en) .stillroom__aside {
+    display: none;
+  }
+}
+
+/* On a shorter screen, tighten the column so the whole guide — down to the
+   comfort note and the standing disclaimer — stays a single, scroll-free screen
+   above the nav: the disclaimer must never fall below the fold. Ease the
+   breathing circle down and pull the gaps in (the flavour lines still fit here
+   and stay). */
+@media (height <= 900px) {
+  .stillroom__content {
+    gap: var(--space-2);
+  }
+  .stillroom__guide {
+    width: min(52vw, 12rem, 32vh);
+    height: min(52vw, 12rem, 32vh);
+  }
+  .stillroom__cue {
+    min-height: 2.2em;
+  }
+}
+
+/* Below the height where the two flavour lines still fit, drop them for both
+   languages (the breathing circle, the live cue, the controls, the comfort note
+   and the disclaimer all stay). */
+@media (height <= 820px) {
+  .stillroom__lore,
+  .stillroom__aside {
+    display: none;
+  }
+}
+
+/* Very short viewports: a smaller circle again, and lift the keeper clear of the
+   fixed nav so the little figure never sits under the buttons. */
+@media (height <= 720px) {
+  .stillroom__guide {
+    width: min(52vw, 10rem, 28vh);
+    height: min(52vw, 10rem, 28vh);
+  }
+  .stillroom__cue {
+    min-height: 1.8em;
+  }
+  /* Reclaim the multi-line settle whisper — the "keep this pace" button below it
+     still carries the action, and the comfort note + disclaimer stay on screen. */
+  .stillroom__settle-hint {
+    display: none;
+  }
+  .stillroom__keeper {
+    bottom: 13%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stillroom__keeper {
+    animation: none;
+  }
+}

@@ -58,12 +58,40 @@ export function lastSpace(): string | null {
 }
 
 /** Whether reduced motion is preferred (§12). Factored out so tests can swap it.
- *  Exception: if this session actively chose full motion (pressed "Enter",
- *  <html data-motion="full">) → always return false, letting motion play
- *  (an explicit human choice wins). */
+ *  Priority: an explicit page-wide choice wins — "full" (detailed, set by the
+ *  motion toggle or by pressing "Enter") always plays; "reduced" (simple, set by
+ *  the toggle) always calms. With no explicit choice, follow the OS setting. */
 export function prefersReducedMotion(): boolean {
-  if (document.documentElement.dataset["motion"] === "full") return false;
+  const motion = document.documentElement.dataset["motion"];
+  if (motion === "full") return false;
+  if (motion === "reduced") return true;
   return matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/* ── Motion preference (§12): a remembered, page-wide "detailed ⇄ simple" choice
+   that overrides the OS setting. Stored locally and reflected on <html
+   data-motion>, so this module and the CSS read one source of truth. Only the
+   toggle and "Enter" (an explicit opt into the full experience) set it; "Skip"
+   stays neutral, leaving the remembered choice (or the OS) untouched. ── */
+const KEY_MOTION = "lt.motion";
+export type MotionPref = "full" | "reduced";
+
+/** The remembered motion choice, or null if none yet (→ follow the OS). */
+export function loadMotionPref(): MotionPref | null {
+  const v = store().get(KEY_MOTION);
+  return v === "full" || v === "reduced" ? v : null;
+}
+
+/** Remember a motion choice and apply it at once (sets <html data-motion>). */
+export function setMotionPref(pref: MotionPref): void {
+  store().set(KEY_MOTION, pref);
+  document.documentElement.dataset["motion"] = pref;
+}
+
+/** On boot: re-apply the remembered choice (if any) before anything renders. */
+export function applyStoredMotion(): void {
+  const pref = loadMotionPref();
+  if (pref !== null) document.documentElement.dataset["motion"] = pref;
 }
 
 /* ── Entrance-variant decision (§10 shortened return entrance) ─────────────

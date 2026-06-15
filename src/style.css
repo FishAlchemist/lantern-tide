@@ -39,6 +39,12 @@
     1
   ); /* slow, long tail, no overshoot */
   --ease-settle: cubic-bezier(0.2, 0, 0, 1); /* for settling into place */
+  /* The breath pacer's curve: a symmetric, sine-like ease-in-out — gentle at
+     each end, fastest in the middle. Unlike --ease-tide (front-loaded, a fast
+     early rise), it never pops the in-breath visual ahead of the breath, so it
+     doesn't cue a rushed in-breath; the same curve eases the out-breath's
+     release. (§7 / breathing-pacer entrainment.) */
+  --ease-breath: cubic-bezier(0.37, 0, 0.63, 1);
 
   /* ── Type (§7) ── system serif placeholder; loading Newsreader / Noto
      Serif TC is a later call (self-host vs Google Fonts). ── */
@@ -443,13 +449,21 @@ body {
   pointer-events: auto;
 }
 
-/* Language toggle — small, unobtrusive, always reachable (top corner).
-   Its label shows the language you'd switch TO (English ↔ Chinese). */
-.lang-toggle {
+/* Global preference toggles — small, unobtrusive, always reachable (top-right
+   cluster). Language shows the language you'd switch TO (English ↔ Chinese);
+   motion shows the current detailed/simple state and flips it. */
+.controls {
   position: fixed;
   top: var(--space-3);
   right: var(--space-3);
   z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.lang-toggle,
+.motion-toggle {
+  position: relative;
   font-family: var(--font-ui);
   font-size: 0.72rem;
   letter-spacing: 0.14em;
@@ -461,15 +475,25 @@ body {
   cursor: pointer;
   transition:
     color var(--dur-base) var(--ease-tide),
-    border-color var(--dur-base) var(--ease-tide);
+    border-color var(--dur-base) var(--ease-tide),
+    background var(--dur-base) var(--ease-tide);
 }
-.lang-toggle:hover {
+.lang-toggle:hover,
+.motion-toggle:hover {
   color: var(--glow);
   border-color: color-mix(in srgb, var(--lantern) 55%, transparent);
 }
-/* Invisible hit-slop: keep the toggle visually slim, but give it a ≥44px touch
+/* Motion "on" (detailed): a warm, filled chip so the state reads at a glance;
+   "off" (simple) keeps the plain dim outline. */
+.motion-toggle[aria-pressed="true"] {
+  color: var(--glow);
+  border-color: color-mix(in srgb, var(--lantern) 60%, transparent);
+  background: color-mix(in srgb, var(--lantern) 18%, var(--abyss) 55%);
+}
+/* Invisible hit-slop: keep the chips visually slim, but give each a ≥44px touch
    target. The pseudo is part of the button box, so taps on it still fire it. */
-.lang-toggle::after {
+.lang-toggle::after,
+.motion-toggle::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -479,11 +503,13 @@ body {
   transform: translate(-50%, -50%);
 }
 
-/* §12 reduced-motion: by default no movement, only a fade (forward motion
-   through a tunnel is a classic motion-sickness trigger). Exception: when the
-   user pressed "Enter" and chose full motion, <html data-motion="full">, we
-   don't suppress — an explicit human choice wins (anyone who pressed "Skip"
-   stays calm). :where() drops the data-motion check's specificity to 0 so
+/* §12 reduced-motion (OS level): by default no movement, only a fade (forward
+   motion through a tunnel is a classic motion-sickness trigger). Exception: when
+   the page is set to full motion — <html data-motion="full">, from the motion
+   toggle or from pressing "Enter" — we don't suppress; an explicit human choice
+   wins. (The toggle's "simple" choice gets the equivalent stilling from the
+   attribute-keyed copy just below this block, so it matches the OS setting.)
+   :where() drops the data-motion check's specificity to 0 so
    individual essential exceptions (e.g. the boat's .paperboat__boat--adrift)
    can still override with higher specificity. */
 @media (prefers-reduced-motion: reduce) {
@@ -515,4 +541,23 @@ body {
   html:where(:not([data-motion="full"])) .threshold::after {
     animation: threshold-glow 7s var(--ease-tide) infinite !important;
   }
+}
+
+/* The same stilling, but as an explicit page-wide choice — the motion toggle's
+   "simple" (<html data-motion="reduced">) — so it applies regardless of the OS
+   setting. Mirrors the OS rule above; the same §12 gentle exceptions shine
+   through (the front-door tide and glow here; the stillroom's breath keeps its
+   own inline-!important duration, so it still swells, gently). */
+:where(html[data-motion="reduced"]) *,
+:where(html[data-motion="reduced"]) *::before,
+:where(html[data-motion="reduced"]) *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: var(--dur-base) !important;
+}
+html[data-motion="reduced"] .threshold::before {
+  animation: tide-swell 32s ease-in-out infinite !important;
+}
+html[data-motion="reduced"] .threshold::after {
+  animation: threshold-glow 7s var(--ease-tide) infinite !important;
 }
